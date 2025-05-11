@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentic-order-routing"
+version = "0.1.0"
+description = "Agentic AI Order Routing POC for Commerce Operating System"
+requires-python = ">=3.12"
+dependencies = [
+    "openai-agents",
+    "python-dotenv"
+] 

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Order Routing Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Tailwind gray-100 */
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem; /* Tailwind rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Tailwind shadow-lg */
+            padding: 1.5rem; /* Tailwind p-6 */
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem; /* Tailwind rounded-lg */
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #4f46e5; /* Tailwind indigo-600 */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca; /* Tailwind indigo-700 */
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db; /* Tailwind gray-300 */
+            border-radius: 0.5rem; /* Tailwind rounded-lg */
+            margin-top: 0.25rem;
+        }
+        .label {
+            display: block;
+            font-weight: 500; /* Tailwind medium */
+            color: #374151; /* Tailwind gray-700 */
+            margin-bottom: 0.25rem;
+        }
+        .table-cell {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb; /* Tailwind gray-200 */
+        }
+        #loadingSpinner {
+            border: 4px solid #f3f4f6; /* Light grey */
+            border-top: 4px solid #4f46e5; /* Indigo */
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">AI Order Routing Dashboard</h1>
+            <p class="text-gray-600">Supply Chain Operator View</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1 card">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">New Order Optimization</h2>
+                <form id="orderForm">
+                    <div class="mb-4">
+                        <label for="productId" class="label">Product ID:</label>
+                        <input type="text" id="productId" name="productId" class="input-field" value="product_A">
+                    </div>
+                    <div class="mb-4">
+                        <label for="quantity" class="label">Quantity:</label>
+                        <input type="number" id="quantity" name="quantity" class="input-field" value="1" min="1">
+                    </div>
+                    <div class="mb-4">
+                        <label for="customerId" class="label">Customer ID:</label>
+                        <select id="customerId" name="customerId" class="input-field">
+                            <option value="cust123">cust123 (Alice - Gold)</option>
+                            <option value="cust456">cust456 (Bob - Silver)</option>
+                            <option value="cust789">cust789 (Charlie - Bronze)</option>
+                            <option value="cust101">cust101 (Diana - Gold)</option>
+                            <option value="cust_INVALID">cust_INVALID (Test Invalid)</option>
+                        </select>
+                    </div>
+                    <div class="mb-6">
+                        <label for="businessPriority" class="label">Business Priority:</label>
+                        <select id="businessPriority" name="businessPriority" class="input-field">
+                            <option value="PRIORITIZE_GOLD_TIER_SPEED">Prioritize Gold Tier Speed</option>
+                            <option value="MINIMIZE_COST">Minimize Cost</option>
+                            <option value="MINIMIZE_DELIVERY_TIME">Minimize Delivery Time</option>
+                            <option value="MINIMIZE_CO2">Minimize CO2</option>
+                            <option value="BALANCED_COST_TIME">Balanced Cost & Time</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full">Optimize Route</button>
+                </form>
+            </div>
+
+            <div class="lg:col-span-2">
+                <div id="resultsSection" class="card hidden">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Optimization Result</h2>
+                    
+                    <div id="loadingSpinner" class="hidden"></div>
+                    <div id="errorDisplay" class="hidden p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+                        <span class="font-medium">Error:</span> <span id="errorMessage"></span>
+                    </div>
+
+                    <div id="recommendationDetails">
+                        <h3 class="text-lg font-semibold text-indigo-600 mb-2">Recommended Route</h3>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4 p-4 border border-indigo-200 rounded-lg bg-indigo-50">
+                            <div>
+                                <p class="text-sm text-gray-500">Source</p>
+                                <p id="recSource" class="font-semibold text-gray-800"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Carrier</p>
+                                <p id="recCarrier" class="font-semibold text-gray-800"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Cost</p>
+                                <p id="recCost" class="font-semibold text-gray-800"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">ETA</p>
+                                <p id="recEta" class="font-semibold text-gray-800"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">CO2 Impact</p>
+                                <p id="recCo2" class="font-semibold text-gray-800"></p>
+                            </div>
+                        </div>
+
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Reasoning</h3>
+                        <p id="recReasoning" class="text-gray-600 mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50"></p>
+
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Alternatives Considered</h3>
+                        <div id="alternativesTableContainer" class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="table-cell">Source</th>
+                                        <th class="table-cell">Carrier</th>
+                                        <th class="table-cell">Cost</th>
+                                        <th class="table-cell">ETA (Days)</th>
+                                        <th class="table-cell">CO2 (kg)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="alternativesTableBody" class="bg-white">
+                                    </tbody>
+                            </table>
+                        </div>
+                         <p id="noAlternativesMessage" class="text-gray-500 hidden">No other viable alternatives were found.</p>
+                    </div>
+                </div>
+
+                 <div id="agentLogSection" class="card mt-6 hidden">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Agent Interaction Log (Simulated)</h2>
+                    <div id="agentLog" class="h-64 overflow-y-auto p-4 bg-gray-900 text-gray-200 text-sm font-mono rounded-lg whitespace-pre-line">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const orderForm = document.getElementById('orderForm');
+        const resultsSection = document.getElementById('resultsSection');
+        const recommendationDetails = document.getElementById('recommendationDetails');
+        const errorDisplay = document.getElementById('errorDisplay');
+        const errorMessage = document.getElementById('errorMessage');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        
+        const recSource = document.getElementById('recSource');
+        const recCarrier = document.getElementById('recCarrier');
+        const recCost = document.getElementById('recCost');
+        const recEta = document.getElementById('recEta');
+        const recCo2 = document.getElementById('recCo2');
+        const recReasoning = document.getElementById('recReasoning');
+        const alternativesTableBody = document.getElementById('alternativesTableBody');
+        const noAlternativesMessage = document.getElementById('noAlternativesMessage');
+
+        const agentLogSection = document.getElementById('agentLogSection');
+        const agentLog = document.getElementById('agentLog');
+
+        // --- Mock Data & Simulated Agent Responses ---
+        // This would be replaced by an API call to your Python backend
+        const MOCK_RESPONSES = {
+            "PRIORITIZE_GOLD_TIER_SPEED_cust123_product_A": {
+                "recommendation": {
+                    "fulfillment_location": "WH_EAST",
+                    "carrier": "CarrierY_Exp",
+                    "cost": 15,
+                    "delivery_days": 1,
+                    "co2_kg": 0.8
+                },
+                "reasoning": "For a gold tier customer (cust123) with priority on speed, CarrierY_Exp from WH_EAST offers the fastest 1-day delivery, aligning with the 'PRIORITIZE_GOLD_TIER_SPEED' objective.",
+                "alternatives_considered": [
+                    { "fulfillment_location": "STORE_CENTRAL", "carrier": "LocalCourier_Exp", "cost": 25, "delivery_days": 1, "co2_kg": 0.3 },
+                    { "fulfillment_location": "WH_EAST", "carrier": "CarrierX_Std", "cost": 10, "delivery_days": 3, "co2_kg": 0.5 }
+                ],
+                "log": [
+                    "INPUT: Raw Order={'product_id': 'product_A', 'quantity': 1, 'customer_id': 'cust123'}, Priority='PRIORITIZE_GOLD_TIER_SPEED'",
+                    "OrderIntakeAgent: Received raw order. Validating...",
+                    "OrderIntakeAgent: Calling get_customer_details_tool for 'cust123'.",
+                    "TOOL_LOG: get_customer_details_tool called for customer_id='cust123'",
+                    "TOOL_LOG: Returning customer details: {\"customer_id\": \"cust123\", \"name\": \"Alice Wonderland\", \"zip_code\": \"10001\", \"tier\": \"gold\"}",
+                    "OrderIntakeAgent: Customer details received. Constructing processed order.",
+                    "OrderIntakeAgent: Handoff Payload: {\"processed_order\": {\"product_id\": \"product_A\", ..., \"tier\": \"gold\"}, \"business_priority\": \"PRIORITIZE_GOLD_TIER_SPEED\"}",
+                    "OrderIntakeAgent: Transferring to OrderRoutingDecisionAgent...",
+                    "OrderRoutingDecisionAgent: Received processed order for Alice Wonderland (gold), priority: PRIORITIZE_GOLD_TIER_SPEED.",
+                    "OrderRoutingDecisionAgent: Calling get_customer_zone for zip '10001'.",
+                    "TOOL_LOG: get_customer_zone called with zip_code='10001'",
+                    "TOOL_LOG: get_customer_zone returning zone='ZONE_1'",
+                    "OrderRoutingDecisionAgent: Calling get_inventory for product 'product_A', quantity 1.",
+                    "TOOL_LOG: get_inventory called with product_id='product_A', quantity=1",
+                    "TOOL_LOG: get_inventory returning: {\"WH_EAST\": 10, \"WH_WEST\": 7, ...}",
+                    "OrderRoutingDecisionAgent: Evaluating shipping options from WH_EAST to ZONE_1...",
+                    "TOOL_LOG: get_shipping_options for wh='WH_EAST', zone='ZONE_1', prod='product_A'",
+                    "TOOL_LOG: get_shipping_options returning: [{\"carrier\": \"CarrierX_Std\", ...}, {\"carrier\": \"CarrierY_Exp\", ...}]",
+                    "OrderRoutingDecisionAgent: Evaluating shipping options from WH_WEST to ZONE_1...",
+                    "OrderRoutingDecisionAgent: Decision made. Preparing final JSON output."
+                ]
+            },
+            "MINIMIZE_COST_cust456_product_D": {
+                "recommendation": {
+                    "fulfillment_location": "WH_WEST",
+                    "carrier": "CarrierZ_Std",
+                    "cost": 11,
+                    "delivery_days": 3,
+                    "co2_kg": 0.5
+                },
+                "reasoning": "For customer cust456 (Silver) with priority 'MINIMIZE_COST' for product_D, WH_WEST with CarrierZ_Std offers the lowest cost at $11.",
+                "alternatives_considered": [
+                    { "fulfillment_location": "WH_SOUTH", "carrier": "CarrierS_Std", "cost": 10, "delivery_days": 2, "co2_kg": 0.4 }, // Actually cheaper, good for showing alternatives
+                    { "fulfillment_location": "WH_EAST", "carrier": "CarrierX_Std", "cost": 12, "delivery_days": 3, "co2_kg": 0.6 }
+                ],
+                 "log": ["INPUT: Raw Order={'product_id': 'product_D', ...}, Priority='MINIMIZE_COST'", "... (similar detailed log) ...", "OrderRoutingDecisionAgent: Decision made. Cost was primary factor."]
+            },
+            "ERROR_INVALID_CUSTOMER": {
+                "error": "Order Intake Failed: Customer ID 'cust_INVALID' not found in CRM.",
+                "log": [
+                    "INPUT: Raw Order={'product_id': 'product_A', 'quantity': 1, 'customer_id': 'cust_INVALID'}, Priority='MINIMIZE_COST'",
+                    "OrderIntakeAgent: Received raw order. Validating...",
+                    "OrderIntakeAgent: Calling get_customer_details_tool for 'cust_INVALID'.",
+                    "TOOL_LOG: get_customer_details_tool called for customer_id='cust_INVALID'",
+                    "TOOL_LOG: Returning error: {\"error\": \"Customer ID 'cust_INVALID' not found in CRM.\"}",
+                    "OrderIntakeAgent: Error from tool. Final output is error JSON."
+                ]
+            }
+        };
+
+        orderForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            resultsSection.classList.remove('hidden');
+            recommendationDetails.classList.add('hidden'); // Hide details until loaded
+            errorDisplay.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+            agentLogSection.classList.remove('hidden');
+            agentLog.innerHTML = '<p class="text-yellow-400">Simulating agent optimization...</p>';
+
+
+            const formData = new FormData(orderForm);
+            const productId = formData.get('productId');
+            const customerId = formData.get('customerId');
+            const businessPriority = formData.get('businessPriority');
+
+            // Simulate API call delay
+            setTimeout(() => {
+                loadingSpinner.classList.add('hidden');
+                let responseKey = `${businessPriority}_${customerId}_${productId}`;
+                if (customerId === 'cust_INVALID') {
+                    responseKey = "ERROR_INVALID_CUSTOMER";
+                }
+                
+                const mockData = MOCK_RESPONSES[responseKey] || MOCK_RESPONSES["PRIORITIZE_GOLD_TIER_SPEED_cust123_product_A"]; // Fallback
+
+                // Populate Agent Log
+                agentLog.innerHTML = ''; // Clear previous log
+                if (mockData.log && mockData.log.length > 0) {
+                    mockData.log.forEach(logEntry => {
+                        const p = document.createElement('p');
+                        if (logEntry.startsWith("INPUT:")) {
+                            p.className = "text-cyan-400";
+                        } else if (logEntry.startsWith("TOOL_LOG:")) {
+                             p.className = "text-gray-400";
+                        } else if (logEntry.includes("Error") || logEntry.includes("Failed")) {
+                            p.className = "text-red-400";
+                        } else {
+                            p.className = "text-green-400";
+                        }
+                        p.textContent = logEntry;
+                        agentLog.appendChild(p);
+                        // Scroll to bottom of log
+                        agentLog.scrollTop = agentLog.scrollHeight;
+                    });
+                }
+
+
+                if (mockData.error) {
+                    errorMessage.textContent = mockData.error;
+                    errorDisplay.classList.remove('hidden');
+                    recommendationDetails.classList.add('hidden');
+                } else {
+                    recommendationDetails.classList.remove('hidden');
+                    errorDisplay.classList.add('hidden');
+
+                    recSource.textContent = mockData.recommendation.fulfillment_location;
+                    recCarrier.textContent = mockData.recommendation.carrier;
+                    recCost.textContent = `$${mockData.recommendation.cost}`;
+                    recEta.textContent = `${mockData.recommendation.delivery_days} day(s)`;
+                    recCo2.textContent = `${mockData.recommendation.co2_kg} kg`;
+                    recReasoning.textContent = mockData.reasoning;
+
+                    alternativesTableBody.innerHTML = ''; // Clear previous alternatives
+                    if (mockData.alternatives_considered && mockData.alternatives_considered.length > 0) {
+                        noAlternativesMessage.classList.add('hidden');
+                        alternativesTableContainer.classList.remove('hidden');
+                        mockData.alternatives_considered.forEach(alt => {
+                            const row = alternativesTableBody.insertRow();
+                            row.innerHTML = `
+                                <td class="table-cell">${alt.fulfillment_location}</td>
+                                <td class="table-cell">${alt.carrier}</td>
+                                <td class="table-cell">$${alt.cost}</td>
+                                <td class="table-cell">${alt.delivery_days}</td>
+                                <td class="table-cell">${alt.co2_kg} kg</td>
+                            `;
+                        });
+                    } else {
+                        noAlternativesMessage.classList.remove('hidden');
+                        alternativesTableContainer.classList.add('hidden');
+                    }
+                }
+            }, 1500); // Simulate 1.5 second delay
+        });
+    </script>
+</body>
+</html>
