@@ -63,6 +63,12 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* Log color coding */
+        .log-tool-call { color: #FFD700; }      /* Gold for tool calls */
+        .log-tool-result { color: #00FF00; }    /* Green for tool results */
+        .log-tool-log { color: #40BFFF; }       /* Light blue for tool logs */
+        .log-agent-handoff { color: #FF69B4; }  /* Pink for agent handoff/switch */
+        .log-default { color: #FFFFFF; }        /* White for normal logs */
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -259,7 +265,7 @@
                 
                     // Update agent log (if present)
                     if (data.logs) {
-                        agentLog.textContent = data.logs.join('\n');
+                        renderLogs(data.logs);
                         agentLogSection.classList.remove('hidden');
                     }
                 } else {
@@ -285,6 +291,19 @@
                 resultsSection.classList.remove('hidden');
             }
         });
+
+        // --- Log Colorization ---
+        function colorizeLogLine(line) {
+            if (line.includes('TOOL_CALL')) return `<span class="log-tool-call">${line}</span>`;
+            if (line.includes('TOOL_RESULT')) return `<span class="log-tool-result">${line}</span>`;
+            if (line.includes('TOOL_LOG')) return `<span class="log-tool-log">${line}</span>`;
+            if (line.includes('AGENT_HANDOFF') || line.includes('AGENT_SWITCH')) return `<span class="log-agent-handoff">${line}</span>`;
+            return `<span class="log-default">${line}</span>`;
+        }
+        function renderLogs(logs) {
+            const logHtml = logs.map(colorizeLogLine).join('<br>');
+            agentLog.innerHTML = logHtml;
+        }
     </script>
 </body>
 </html>
