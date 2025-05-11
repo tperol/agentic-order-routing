@@ -76,7 +76,21 @@ async def main(raw_order=None, business_priority=None):
             run_config=RunConfig()
         )
         logger.info("Order processing completed")
-        print(result.final_output)
+        logger.info(f"Final result from main: {result.final_output}")
+        # Ensure we always return a valid dict
+        if not result.final_output:
+            return {"error": "No recommendation produced by agent."}
+        try:
+            parsed = result.final_output
+            # If the agent returned a string, try to parse as JSON
+            if isinstance(parsed, str):
+                parsed = json.loads(parsed)
+            if not isinstance(parsed, dict):
+                return {"error": "Agent did not return a valid dict."}
+            return parsed
+        except Exception as e:
+            logger.error(f"Failed to parse agent output: {e}")
+            return {"error": f"Failed to parse agent output: {e}"}
 
 if __name__ == "__main__":
     # asyncio.run(main())
