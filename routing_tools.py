@@ -9,7 +9,9 @@ from mock_data import (
     ZIP_TO_ZONE_DB,
     PRODUCT_WEIGHT_DB # Though not directly used in CO2 calc yet, it's available
 )
+from agents import function_tool
 
+@function_tool
 def get_customer_zone(zip_code: str) -> str:
     """
     Determines the shipping zone for a customer based on their zip code.
@@ -26,6 +28,7 @@ def get_customer_zone(zip_code: str) -> str:
     print(f"TOOL_LOG: get_customer_zone returning zone='{zone}'")
     return zone
 
+@function_tool
 def get_inventory(product_id: str, quantity: int) -> str:
     """
     Checks stock levels for a given product_id and quantity across ALL fulfillment locations.
@@ -51,6 +54,7 @@ def get_inventory(product_id: str, quantity: int) -> str:
     print(f"TOOL_LOG: get_inventory returning: {result_json}")
     return result_json
 
+@function_tool
 def get_shipping_options(warehouse_id: str, zone: str, product_id: str) -> str:
     """
     Fetches available shipping methods, costs, ETAs, and CO2 impact
