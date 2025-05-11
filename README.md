@@ -99,31 +99,81 @@ graph TD
 
 ## 5. Technology Stack
 
-* **Python 3.x**
+* **Python 3.8+**
 * **OpenAI Python SDK:** For interacting with the Assistants API.
 * **OpenAI API or Gemini API:** Requires an API key with access to GPT models
 
 ## 6. Setup Instructions
 
-1.  **Clone the repository:**
+1. **Clone the repository:**
     ```bash
     git clone <repository_url>
     cd <repository_name>
     ```
-2.  **Create a virtual environment (recommended):**
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows: venv\Scripts\activate
-    ```
-3.  **Install dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-4.  **Set up your OpenAI API Key:**
-    * Create a `.env` file in the root of the project.
-    * Add your OpenAI API and Gemini API key to the `.env` file:
-    * The Python script will use `python-dotenv` to load this key.
 
-## 6. How to Run the POC
+2. **Create and activate a virtual environment (recommended):**
+    ```bash
+    # Create virtual environment
+    python -m venv .venv
+    
+    # Activate virtual environment
+    # On macOS/Linux:
+    source .venv/bin/activate
+    # On Windows:
+    .venv\Scripts\activate
+    ```
+
+3. **Install the package in development mode:**
+    ```bash
+    # Install the package and its dependencies
+    pip install -e .
+    ```
+
+4. **Set up your API keys:**
+    * Create a `.env` file in the root of the project
+    * Add your API keys to the `.env` file:
+      ```
+      OPENAI_API_KEY=your_openai_api_key_here
+      GEMINI_API_KEY=your_gemini_api_key_here
+      ```
+
+## 7. Running the POC
+
+You can run the POC in two ways:
+
+### Option 1: Using the run script (Recommended)
 ```bash
-python main.py
+./run.sh
+```
+This script will:
+1. Create and activate a virtual environment if needed
+2. Install the package in development mode
+3. Check for required environment variables
+4. Run the main application
+
+### Option 2: Manual execution
+```bash
+# Activate virtual environment
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install package
+pip install -e .
+
+# Run the script from the src directory
+cd src
+python -m agentic_order_routing.main
+```
+
+The script will:
+1. Process a sample order through the intake agent
+2. Route the order based on the specified business priority
+3. Display the final routing recommendation with explanation
+
+You can view the trace of the agent interactions at the URL printed in the console.
+
+## 8. Development
+
+To modify or extend the POC:
+1. The agent tools are in the `tools/` directory
+2. Mock data is in `mock_data.py`
+3. Main orchestration is in `main.py`

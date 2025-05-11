@@ -19,8 +19,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Import tools for each assistant
-from intake_agent_tools import get_customer_details_tool
-from routing_tools import get_customer_zone, get_inventory, get_shipping_options
+from tools.intake_agent_tools import get_customer_details_tool
+from tools.routing_tools import get_customer_zone, get_inventory, get_shipping_options
 
 # --- Load Environment Variables and Model ---
 load_dotenv()

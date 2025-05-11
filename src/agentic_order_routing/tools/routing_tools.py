@@ -3,7 +3,7 @@
 # to specialized services or other agents' knowledge bases.
 
 import json
-from mock_data import (
+from agentic_order_routing.mock_data import (
     INVENTORY_DB,
     SHIPPING_OPTIONS_DB,
     ZIP_TO_ZONE_DB,

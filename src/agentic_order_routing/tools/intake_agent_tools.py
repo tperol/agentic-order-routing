@@ -1,9 +1,8 @@
-# intake_agent_tools.py
 # This file contains tool functions for the OrderIntakeAssistant/Agent.
 # These tools help in validating and enriching raw order data.
 
 import json
-from mock_data import MOCK_CRM_DB # Importing the customer database
+from agentic_order_routing.mock_data import MOCK_CRM_DB # Importing the customer database
 from agents import function_tool
 
 @function_tool
