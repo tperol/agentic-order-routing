@@ -25,6 +25,7 @@ from routing_tools import get_customer_zone, get_inventory, get_shipping_options
 # --- Load Environment Variables and Model ---
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 MODEL = "gpt-4o"
 
 # --- Agent Definitions ---
@@ -33,36 +34,42 @@ order_routing_agent = Agent(
     handoff_description="Specialist agent for determining optimal order fulfillment routes",
     instructions=f"""
 {RECOMMENDED_PROMPT_PREFIX}
-You are the AI Order Routing Decision Agent. You will receive a 'processed_order' JSON
-(which includes product, quantity, customer details like ZIP code and tier) and a 'business_priority' string.
+You are the AI Order Routing Decision Agent.
+Your input will be a JSON string containing:
+1.  A 'processed_order' object (with product_id, quantity, customer_id, customer_name, customer_zip_code, customer_tier).
+2.  A 'business_priority' string.
 
-Your primary role is to orchestrate information gathering using specialized tools and then
-decide the optimal fulfillment route.
+Your primary role is to parse this input, use specialized tools to gather fulfillment options,
+and then decide the optimal fulfillment route based on the provided data and priority.
 
 Available Tools:
-1. `get_customer_zone(zip_code)`: Queries our Customer Zone Service.
-2. `get_inventory(product_id, quantity)`: Queries our Inventory Agent's knowledge base for stock.
-3. `get_shipping_options(warehouse_id, zone, product_id)`: Queries our Logistics Agent for shipping methods, costs, ETAs, and CO2 data.
+1. `get_customer_zone(zip_code)`: Queries a Customer Zone Service.
+2. `get_inventory(product_id, quantity)`: Queries an Inventory service for stock levels.
+3. `get_shipping_options(warehouse_id, zone, product_id)`: Queries a Logistics service for shipping methods, costs, ETAs, and CO2 data.
 
 Workflow:
-1.  Acknowledge the processed order details (parse the JSON string) and the business priority.
-2.  Use `get_customer_zone` to determine the customer's shipping zone from their `customer_zip_code`.
-3.  Use `get_inventory` to find all fulfillment locations with sufficient stock for the order's `product_id` and `quantity`.
-4.  If no stock is found anywhere, your output MUST be a JSON string: {{"error": "No stock available for the product."}}.
+1.  Parse the input JSON string to get the 'processed_order' dictionary and the 'business_priority' string.
+2.  Extract `customer_zip_code` from `processed_order` and use `get_customer_zone` to determine the shipping zone. 
+    If the tool returns an error or an unknown zone that prevents further processing, output an error JSON.
+3.  Extract `product_id` and `quantity` from `processed_order` and use `get_inventory` to find all fulfillment locations with sufficient stock.
+4.  If `get_inventory` returns an error or indicates no stock (e.g., empty JSON object '{{}}' or a tool error), 
+    your output MUST be a JSON string: {{"error": "No stock available for the product at any location."}}.
 5.  For each valid location with stock:
-    a. Use `get_shipping_options` to get all shipping options to the customer's zone for the product.
-6.  Evaluate all potential fulfillment routes (location + shipping option) against the stated `business_priority`.
+    a. Use `get_shipping_options` with the location, customer's zone, and product_id to get shipping options. Accumulate all valid options.
+6.  If no shipping options are found from any stocked location to the customer's zone after checking all possibilities, 
+    your output MUST be a JSON string: {{"error": "No shipping options available from stocked locations to the customer's zone."}}.
+7.  Evaluate all collected fulfillment routes (location + shipping option) against the `business_priority`.
+    Consider the `customer_tier` from the `processed_order` if the priority is "PRIORITIZE_GOLD_TIER_SPEED" 
+    (e.g., gold tier might allow slightly higher cost for significantly faster speed).
     * Valid priorities: "MINIMIZE_COST", "MINIMIZE_DELIVERY_TIME", "MINIMIZE_CO2", "BALANCED_COST_TIME", "PRIORITIZE_GOLD_TIER_SPEED".
-    * If "PRIORITIZE_GOLD_TIER_SPEED" and the `customer_tier` in the processed order is "gold", give extra weight to faster options, even if slightly more expensive.
-7.  Present your final recommendation as a JSON string. This JSON should contain:
-    `recommendation`: {{ "fulfillment_location": "...", "carrier": "...", "cost": ..., "delivery_days": ..., "co2_kg": ... }},
-    `reasoning`: "A clear explanation...",
-    `alternatives_considered`: [ {{ "fulfillment_location": "...", ...}}, ... ] (1-2 alternatives)
-8.  If no suitable route is found after checking options, your output MUST be a JSON string: {{"error": "No suitable shipping options found."}}.
-
-You can engage in a conversation about your decision-making process. When asked about your reasoning,
-explain your thought process, the factors you considered, and why you made specific choices.
-Do not add any conversational fluff. Your entire output must be a single JSON string.
+8.  Your final output MUST be a single JSON string containing:
+    {{
+        "recommendation": {{ "fulfillment_location": "...", "carrier": "...", "cost": ..., "delivery_days": ..., "co2_kg": ... }},
+        "reasoning": "A clear, concise explanation of why this option was chosen, referencing the priority and key data points.",
+        "alternatives_considered": [ {{ "fulfillment_location": "...", "carrier": "...", "cost": ..., "delivery_days": ..., "co2_kg": ...}}, ... ] // 1-2 best viable alternatives
+    }}
+9.  If no single route can be definitively recommended (e.g., all options have issues), clearly state this in an error JSON as per step 6 or 8.
+Do not add any conversational fluff, introductions, or conclusions. Your entire output must be a single, valid JSON string.
 """,
     tools=[get_customer_zone, get_inventory, get_shipping_options],
     model=MODEL
@@ -72,37 +79,43 @@ Do not add any conversational fluff. Your entire output must be a single JSON st
 
 order_intake_agent = Agent(
     name="OrderIntakeAgent",
-    handoff_description="Specialist agent for processing and validating incoming orders",
-    instructions="""
+    handoff_description="Specialist for validating and enriching raw order data.",
+    instructions=f"""
+{RECOMMENDED_PROMPT_PREFIX}
 You are an AI Order Intake Agent. Your primary responsibility is to receive raw order information,
-validate its basic structure, enrich it with customer details, and then prepare a structured
-'processed_order' JSON object for handoff to the Order Routing Decision Agent named "OrderRoutingDecisionAgent".
+validate its basic structure, enrich it with customer details using available tools, and then
+prepare a structured payload for handoff to the "OrderRoutingDecisionAgent".
 
-Input: You will receive a raw order as a JSON string, typically containing at least
-`product_id`, `quantity`, and `customer_id`.
+Input: You will receive a JSON string containing two top-level keys:
+1.  'raw_order': An object with `product_id` (string), `quantity` (positive integer), and `customer_id` (string).
+2.  'business_priority': A string indicating the routing priority.
 
 Your Workflow:
-1.  Parse the input JSON string to get the raw order dictionary.
-2.  Validate Raw Order Structure: Ensure the raw order contains the essential fields:
-    `product_id` (string), `quantity` (positive integer), and `customer_id` (string).
-    If validation fails, your output MUST be a JSON string: {"error": "Validation failed: [reason]"}.
+1.  Parse the input JSON string to get the 'raw_order' dictionary and the 'business_priority' string.
+2.  Validate Raw Order Structure: From the 'raw_order' object, ensure `product_id`, `quantity`,
+    and `customer_id` are present and valid (quantity is a positive integer).
+    If validation fails, your output MUST be a JSON string: {{"error": "Validation failed: [specific reason for failure]"}}. Do not proceed to handoff.
 3.  Enrich with Customer Details: Use the `get_customer_details_tool` with the `customer_id`
-    from the raw order to fetch the customer's name, ZIP code, and tier.
-4.  Handle Tool Output:
-    * If `get_customer_details_tool` returns an error (e.g., customer not found, ZIP missing),
-        your output MUST be that error JSON string.
+    from the 'raw_order' to fetch the customer's name, ZIP code, and tier.
+4.  Handle Tool Output from `get_customer_details_tool`:
+    * If the tool returns an error (e.g., customer not found, ZIP missing from CRM),
+        your output MUST be that error JSON string (the tool already formats it as JSON). Do not proceed to handoff.
     * If successful, it will return customer details as a JSON string. Parse this.
-5.  Construct Processed Order: Combine the original valid order information with the successfully
-    retrieved and valid customer details to create a `processed_order` dictionary.
+5.  Construct Processed Order: Combine the original valid 'raw_order' information (product_id, quantity, customer_id)
+    with the successfully retrieved customer details (customer_name, customer_zip_code, customer_tier)
+    to create a `processed_order` dictionary.
     This object MUST include: `product_id`, `quantity`, `customer_id`, `customer_name`,
     `customer_zip_code`, and `customer_tier`.
-6.  Output: Your final response MUST be ONLY the `processed_order` as a JSON string if all steps
-    were successful. If any step results in an error, your final response MUST be ONLY the
-    JSON string containing the error message (e.g., `{"error": "Detailed error message"}`).
-    Do not add any conversational fluff or introductory/concluding remarks.
-
-When you have successfully processed an order, you should hand off to the OrderRoutingDecisionAgent
-by including the processed order and the business priority in your response.
+6.  Prepare Handoff Payload: If all steps were successful, construct a JSON string that will be the input for the "OrderRoutingDecisionAgent".
+    This JSON string MUST contain two top-level keys:
+    - "processed_order": The `processed_order` dictionary you constructed.
+    - "business_priority": The `business_priority` string you received in your initial input.
+    Example of the JSON string to prepare: `{{"processed_order": {{...}}, "business_priority": "MINIMIZE_COST"}}`
+7.  Handoff: Call the `transfer_to_OrderRoutingDecisionAgent` function. The content of your message just before calling this function
+    (i.e., the JSON string prepared in step 6) will be passed as input to the "OrderRoutingDecisionAgent".
+    If any prior step resulted in an error (validation, tool call), your final response MUST be ONLY the JSON string
+    containing that error message. In this error case, DO NOT call the handoff function.
+Do not add any conversational fluff, introductions, or conclusions beyond the required JSON output.
 """,
     tools=[get_customer_details_tool],
     handoffs=[order_routing_agent],
