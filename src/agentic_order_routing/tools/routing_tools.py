@@ -3,6 +3,7 @@
 # to specialized services or other agents' knowledge bases.
 
 import json
+import logging
 from agentic_order_routing.mock_data import (
     INVENTORY_DB,
     SHIPPING_OPTIONS_DB,
@@ -10,6 +11,8 @@ from agentic_order_routing.mock_data import (
     PRODUCT_WEIGHT_DB # Though not directly used in CO2 calc yet, it's available
 )
 from agents import function_tool
+
+logger = logging.getLogger("agent_workflow")
 
 @function_tool
 def get_customer_zone(zip_code: str) -> str:
@@ -23,9 +26,9 @@ def get_customer_zone(zip_code: str) -> str:
     Returns:
         The shipping zone string (e.g., "ZONE_1") or "UNKNOWN_ZONE" if not found.
     """
-    print(f"TOOL_LOG: get_customer_zone called with zip_code='{zip_code}'")
+    logger.info(f"TOOL_LOG: get_customer_zone called with zip_code='{zip_code}'")
     zone = ZIP_TO_ZONE_DB.get(zip_code, ZIP_TO_ZONE_DB.get("UNKNOWN_ZIP_DEFAULT", "UNKNOWN_ZONE"))
-    print(f"TOOL_LOG: get_customer_zone returning zone='{zone}'")
+    logger.info(f"TOOL_LOG: get_customer_zone returning zone='{zone}'")
     return zone
 
 @function_tool
@@ -43,7 +46,7 @@ def get_inventory(product_id: str, quantity: int) -> str:
         with location_id as key and available quantity as value.
         Example: '{"WH_EAST": 10, "STORE_CENTRAL": 3}'
     """
-    print(f"TOOL_LOG: get_inventory called with product_id='{product_id}', quantity={quantity}")
+    logger.info(f"TOOL_LOG: get_inventory called with product_id='{product_id}', quantity={quantity}")
     available_locations = {}
     for location_id, products_at_location in INVENTORY_DB.items():
         stock_level = products_at_location.get(product_id, 0)
@@ -51,7 +54,7 @@ def get_inventory(product_id: str, quantity: int) -> str:
             available_locations[location_id] = stock_level
     
     result_json = json.dumps(available_locations)
-    print(f"TOOL_LOG: get_inventory returning: {result_json}")
+    logger.info(f"TOOL_LOG: get_inventory returning: {result_json}")
     return result_json
 
 @function_tool
@@ -71,7 +74,7 @@ def get_shipping_options(warehouse_id: str, zone: str, product_id: str) -> str:
         Each dictionary contains: "carrier", "cost", "days", "co2_kg".
         Example: '[{"carrier": "CarrierX_Std", "cost": 10, "days": 3, "co2_kg": 0.5}, ...]'
     """
-    print(f"TOOL_LOG: get_shipping_options called for warehouse_id='{warehouse_id}', zone='{zone}', product_id='{product_id}'")
+    logger.info(f"TOOL_LOG: get_shipping_options called for warehouse_id='{warehouse_id}', zone='{zone}', product_id='{product_id}'")
     
     # Get all options for the warehouse and zone
     options_for_zone = SHIPPING_OPTIONS_DB.get(warehouse_id, {}).get(zone, [])
@@ -91,11 +94,12 @@ def get_shipping_options(warehouse_id: str, zone: str, product_id: str) -> str:
         })
         
     result_json = json.dumps(formatted_options)
-    print(f"TOOL_LOG: get_shipping_options returning for {warehouse_id} to {zone} for {product_id}: {result_json}")
+    logger.info(f"TOOL_LOG: get_shipping_options returning for {warehouse_id} to {zone} for {product_id}: {result_json}")
     return result_json
 
 # --- Main block for testing the tools directly ---
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - [%(levelname)s] - %(name)s - %(message)s')
     print("--- Testing routing_tools.py ---")
 
     # Test get_customer_zone

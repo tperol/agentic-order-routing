@@ -2,8 +2,11 @@
 # These tools help in validating and enriching raw order data.
 
 import json
+import logging
 from agentic_order_routing.mock_data import MOCK_CRM_DB # Importing the customer database
 from agents import function_tool
+
+logger = logging.getLogger("agent_workflow")
 
 @function_tool
 def get_customer_details_tool(customer_id: str) -> str:
@@ -19,24 +22,24 @@ def get_customer_details_tool(customer_id: str) -> str:
         Returns a JSON string with an error message if the customer is not found
         or if crucial data like zip_code is missing.
     """
-    print(f"INTAKE_TOOL_LOG: get_customer_details_tool called for customer_id='{customer_id}'")
+    logger.info(f"TOOL_CALL: get_customer_details_tool invoked with customer_id='{customer_id}'")
 
     if not customer_id or not isinstance(customer_id, str):
         error_msg = {"error": "Invalid customer_id format. Must be a non-empty string."}
-        print(f"INTAKE_TOOL_LOG: Returning error: {json.dumps(error_msg)}")
+        logger.warning(f"Validation error in get_customer_details_tool: {error_msg['error']}")
         return json.dumps(error_msg)
 
     customer_data = MOCK_CRM_DB.get(customer_id)
     if not customer_data:
         error_msg = {"error": f"Customer ID '{customer_id}' not found in CRM."}
-        print(f"INTAKE_TOOL_LOG: Returning error: {json.dumps(error_msg)}")
+        logger.warning(f"CRM lookup error in get_customer_details_tool: {error_msg['error']}")
         return json.dumps(error_msg)
 
     # Ensure essential data for routing is present
     zip_code = customer_data.get("zip_code")
     if not zip_code:
         error_msg = {"error": f"Customer ID '{customer_id}' found, but essential zip_code is missing from CRM data."}
-        print(f"INTAKE_TOOL_LOG: Returning error: {json.dumps(error_msg)}")
+        logger.warning(f"Data integrity error in get_customer_details_tool: {error_msg['error']}")
         return json.dumps(error_msg)
 
     # Prepare successful data structure
@@ -48,12 +51,13 @@ def get_customer_details_tool(customer_id: str) -> str:
     }
     
     result_json = json.dumps(customer_details_for_agent)
-    print(f"INTAKE_TOOL_LOG: Returning customer details: {result_json}")
+    logger.info(f"TOOL_RESULT: get_customer_details_tool returning: {result_json}")
     return result_json
 
 # --- Main block for testing the tool directly ---
 if __name__ == '__main__':
-    print("--- Testing intake_agent_tools.py ---")
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - [%(levelname)s] - %(name)s - %(message)s')
+    logger.info("--- Testing intake_agent_tools.py (direct execution) ---")
 
     # Test case 1: Valid customer
     print(f"\n[Test 1] Customer 'cust123':")
