@@ -194,141 +194,55 @@
         const agentLogSection = document.getElementById('agentLogSection');
         const agentLog = document.getElementById('agentLog');
 
-        // --- Mock Data & Simulated Agent Responses ---
-        // This would be replaced by an API call to your Python backend
-        const MOCK_RESPONSES = {
-            "PRIORITIZE_GOLD_TIER_SPEED_cust123_product_A": {
-                "recommendation": {
-                    "fulfillment_location": "WH_EAST",
-                    "carrier": "CarrierY_Exp",
-                    "cost": 15,
-                    "delivery_days": 1,
-                    "co2_kg": 0.8
-                },
-                "reasoning": "For a gold tier customer (cust123) with priority on speed, CarrierY_Exp from WH_EAST offers the fastest 1-day delivery, aligning with the 'PRIORITIZE_GOLD_TIER_SPEED' objective.",
-                "alternatives_considered": [
-                    { "fulfillment_location": "STORE_CENTRAL", "carrier": "LocalCourier_Exp", "cost": 25, "delivery_days": 1, "co2_kg": 0.3 },
-                    { "fulfillment_location": "WH_EAST", "carrier": "CarrierX_Std", "cost": 10, "delivery_days": 3, "co2_kg": 0.5 }
-                ],
-                "log": [
-                    "INPUT: Raw Order={'product_id': 'product_A', 'quantity': 1, 'customer_id': 'cust123'}, Priority='PRIORITIZE_GOLD_TIER_SPEED'",
-                    "OrderIntakeAgent: Received raw order. Validating...",
-                    "OrderIntakeAgent: Calling get_customer_details_tool for 'cust123'.",
-                    "TOOL_LOG: get_customer_details_tool called for customer_id='cust123'",
-                    "TOOL_LOG: Returning customer details: {\"customer_id\": \"cust123\", \"name\": \"Alice Wonderland\", \"zip_code\": \"10001\", \"tier\": \"gold\"}",
-                    "OrderIntakeAgent: Customer details received. Constructing processed order.",
-                    "OrderIntakeAgent: Handoff Payload: {\"processed_order\": {\"product_id\": \"product_A\", ..., \"tier\": \"gold\"}, \"business_priority\": \"PRIORITIZE_GOLD_TIER_SPEED\"}",
-                    "OrderIntakeAgent: Transferring to OrderRoutingDecisionAgent...",
-                    "OrderRoutingDecisionAgent: Received processed order for Alice Wonderland (gold), priority: PRIORITIZE_GOLD_TIER_SPEED.",
-                    "OrderRoutingDecisionAgent: Calling get_customer_zone for zip '10001'.",
-                    "TOOL_LOG: get_customer_zone called with zip_code='10001'",
-                    "TOOL_LOG: get_customer_zone returning zone='ZONE_1'",
-                    "OrderRoutingDecisionAgent: Calling get_inventory for product 'product_A', quantity 1.",
-                    "TOOL_LOG: get_inventory called with product_id='product_A', quantity=1",
-                    "TOOL_LOG: get_inventory returning: {\"WH_EAST\": 10, \"WH_WEST\": 7, ...}",
-                    "OrderRoutingDecisionAgent: Evaluating shipping options from WH_EAST to ZONE_1...",
-                    "TOOL_LOG: get_shipping_options for wh='WH_EAST', zone='ZONE_1', prod='product_A'",
-                    "TOOL_LOG: get_shipping_options returning: [{\"carrier\": \"CarrierX_Std\", ...}, {\"carrier\": \"CarrierY_Exp\", ...}]",
-                    "OrderRoutingDecisionAgent: Evaluating shipping options from WH_WEST to ZONE_1...",
-                    "OrderRoutingDecisionAgent: Decision made. Preparing final JSON output."
-                ]
-            },
-            "MINIMIZE_COST_cust456_product_D": {
-                "recommendation": {
-                    "fulfillment_location": "WH_WEST",
-                    "carrier": "CarrierZ_Std",
-                    "cost": 11,
-                    "delivery_days": 3,
-                    "co2_kg": 0.5
-                },
-                "reasoning": "For customer cust456 (Silver) with priority 'MINIMIZE_COST' for product_D, WH_WEST with CarrierZ_Std offers the lowest cost at $11.",
-                "alternatives_considered": [
-                    { "fulfillment_location": "WH_SOUTH", "carrier": "CarrierS_Std", "cost": 10, "delivery_days": 2, "co2_kg": 0.4 }, // Actually cheaper, good for showing alternatives
-                    { "fulfillment_location": "WH_EAST", "carrier": "CarrierX_Std", "cost": 12, "delivery_days": 3, "co2_kg": 0.6 }
-                ],
-                 "log": ["INPUT: Raw Order={'product_id': 'product_D', ...}, Priority='MINIMIZE_COST'", "... (similar detailed log) ...", "OrderRoutingDecisionAgent: Decision made. Cost was primary factor."]
-            },
-            "ERROR_INVALID_CUSTOMER": {
-                "error": "Order Intake Failed: Customer ID 'cust_INVALID' not found in CRM.",
-                "log": [
-                    "INPUT: Raw Order={'product_id': 'product_A', 'quantity': 1, 'customer_id': 'cust_INVALID'}, Priority='MINIMIZE_COST'",
-                    "OrderIntakeAgent: Received raw order. Validating...",
-                    "OrderIntakeAgent: Calling get_customer_details_tool for 'cust_INVALID'.",
-                    "TOOL_LOG: get_customer_details_tool called for customer_id='cust_INVALID'",
-                    "TOOL_LOG: Returning error: {\"error\": \"Customer ID 'cust_INVALID' not found in CRM.\"}",
-                    "OrderIntakeAgent: Error from tool. Final output is error JSON."
-                ]
-            }
-        };
-
-        orderForm.addEventListener('submit', function(event) {
+        // --- Form Submission ---
+        orderForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            resultsSection.classList.remove('hidden');
-            recommendationDetails.classList.add('hidden'); // Hide details until loaded
-            errorDisplay.classList.add('hidden');
+            const productId = document.getElementById('productId').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const customerId = document.getElementById('customerId').value;
+            const businessPriority = document.getElementById('businessPriority').value;
+
+            // Show loading spinner and hide previous results
             loadingSpinner.classList.remove('hidden');
-            agentLogSection.classList.remove('hidden');
-            agentLog.innerHTML = '<p class="text-yellow-400">Simulating agent optimization...</p>';
+            resultsSection.classList.add('hidden');
+            errorDisplay.classList.add('hidden');
+            agentLogSection.classList.add('hidden');
 
+            try {
+                const response = await fetch('/optimize-route', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        quantity: quantity,
+                        customer_id: customerId,
+                        business_priority: businessPriority
+                    }),
+                });
 
-            const formData = new FormData(orderForm);
-            const productId = formData.get('productId');
-            const customerId = formData.get('customerId');
-            const businessPriority = formData.get('businessPriority');
-
-            // Simulate API call delay
-            setTimeout(() => {
-                loadingSpinner.classList.add('hidden');
-                let responseKey = `${businessPriority}_${customerId}_${productId}`;
-                if (customerId === 'cust_INVALID') {
-                    responseKey = "ERROR_INVALID_CUSTOMER";
-                }
-                
-                const mockData = MOCK_RESPONSES[responseKey] || MOCK_RESPONSES["PRIORITIZE_GOLD_TIER_SPEED_cust123_product_A"]; // Fallback
-
-                // Populate Agent Log
-                agentLog.innerHTML = ''; // Clear previous log
-                if (mockData.log && mockData.log.length > 0) {
-                    mockData.log.forEach(logEntry => {
-                        const p = document.createElement('p');
-                        if (logEntry.startsWith("INPUT:")) {
-                            p.className = "text-cyan-400";
-                        } else if (logEntry.startsWith("TOOL_LOG:")) {
-                             p.className = "text-gray-400";
-                        } else if (logEntry.includes("Error") || logEntry.includes("Failed")) {
-                            p.className = "text-red-400";
-                        } else {
-                            p.className = "text-green-400";
-                        }
-                        p.textContent = logEntry;
-                        agentLog.appendChild(p);
-                        // Scroll to bottom of log
-                        agentLog.scrollTop = agentLog.scrollHeight;
-                    });
-                }
-
-
-                if (mockData.error) {
-                    errorMessage.textContent = mockData.error;
+                const data = await response.json();
+                console.log("API response:", data); // Debug log
+                if (data.error) {
+                    errorMessage.textContent = data.error;
                     errorDisplay.classList.remove('hidden');
-                    recommendationDetails.classList.add('hidden');
-                } else {
-                    recommendationDetails.classList.remove('hidden');
-                    errorDisplay.classList.add('hidden');
-
-                    recSource.textContent = mockData.recommendation.fulfillment_location;
-                    recCarrier.textContent = mockData.recommendation.carrier;
-                    recCost.textContent = `$${mockData.recommendation.cost}`;
-                    recEta.textContent = `${mockData.recommendation.delivery_days} day(s)`;
-                    recCo2.textContent = `${mockData.recommendation.co2_kg} kg`;
-                    recReasoning.textContent = mockData.reasoning;
-
-                    alternativesTableBody.innerHTML = ''; // Clear previous alternatives
-                    if (mockData.alternatives_considered && mockData.alternatives_considered.length > 0) {
-                        noAlternativesMessage.classList.add('hidden');
-                        alternativesTableContainer.classList.remove('hidden');
-                        mockData.alternatives_considered.forEach(alt => {
-                            const row = alternativesTableBody.insertRow();
+                } else if (data.recommendation) {
+                    // Update recommendation details
+                    recSource.textContent = data.recommendation.fulfillment_location;
+                    recCarrier.textContent = data.recommendation.carrier;
+                    recCost.textContent = `$${data.recommendation.cost}`;
+                    recEta.textContent = `${data.recommendation.delivery_days} days`;
+                    recCo2.textContent = `${data.recommendation.co2_kg} kg`;
+                
+                    // Always display reasoning if present
+                    recReasoning.textContent = data.reasoning || '';
+                
+                    // Update alternatives table
+                    alternativesTableBody.innerHTML = '';
+                    if (data.alternatives_considered && data.alternatives_considered.length > 0) {
+                        data.alternatives_considered.forEach(alt => {
+                            const row = document.createElement('tr');
                             row.innerHTML = `
                                 <td class="table-cell">${alt.fulfillment_location}</td>
                                 <td class="table-cell">${alt.carrier}</td>
@@ -336,13 +250,40 @@
                                 <td class="table-cell">${alt.delivery_days}</td>
                                 <td class="table-cell">${alt.co2_kg} kg</td>
                             `;
+                            alternativesTableBody.appendChild(row);
                         });
+                        noAlternativesMessage.classList.add('hidden');
                     } else {
                         noAlternativesMessage.classList.remove('hidden');
-                        alternativesTableContainer.classList.add('hidden');
                     }
+                
+                    // Update agent log (if present)
+                    if (data.logs) {
+                        agentLog.textContent = data.logs.join('\n');
+                        agentLogSection.classList.remove('hidden');
+                    }
+                } else {
+                    errorMessage.textContent = "No recommendation found in response.";
+                    errorDisplay.classList.remove('hidden');
+                    // Clear previous results
+                    recSource.textContent = '';
+                    recCarrier.textContent = '';
+                    recCost.textContent = '';
+                    recEta.textContent = '';
+                    recCo2.textContent = '';
+                    recReasoning.textContent = '';
+                    alternativesTableBody.innerHTML = '';
+                    noAlternativesMessage.classList.remove('hidden');
+                    agentLog.textContent = '';
+                    agentLogSection.classList.add('hidden');
                 }
-            }, 1500); // Simulate 1.5 second delay
+            } catch (error) {
+                errorMessage.textContent = `Error: ${error.message}`;
+                errorDisplay.classList.remove('hidden');
+            } finally {
+                loadingSpinner.classList.add('hidden');
+                resultsSection.classList.remove('hidden');
+            }
         });
     </script>
 </body>
