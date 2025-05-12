@@ -10,6 +10,7 @@ from typing import Dict, Any, List
 import uvicorn
 
 from src.agentic_order_routing.main import main
+from src.agentic_order_routing.mock_data import INVENTORY_DB, MOCK_CRM_DB, SHIPPING_OPTIONS_DB, ZIP_TO_ZONE_DB
 
 
 # --- Logging Setup ---
@@ -60,6 +61,13 @@ class OrderOptimizationRequest(BaseModel):
 class OptimizationResponse(BaseModel):
     result: Dict[str, Any]
     logs: List[str]
+
+class ContextualDataResponse(BaseModel):
+    inventory_summary: Dict[str, Dict[str, int]]  # {product_id: {warehouse: stock}}
+    warehouse_count: int
+    product_count: int
+    customer_count: int
+    zone_count: int
 
 # --- API Endpoints ---
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
@@ -135,6 +143,41 @@ async def optimize_route_endpoint(request_data: OrderOptimizationRequest):
     finally:
         # Crucial: Remove the handler so logs don't accumulate across requests
         workflow_logger.removeHandler(list_handler)
+
+@app.get("/contextual-data", response_model=ContextualDataResponse)
+async def get_contextual_data_endpoint():
+    logger.info("API_CALL: /contextual-data received request")
+    try:
+        inventory_summary = {}
+        all_products = set()
+        for wh, products in INVENTORY_DB.items():
+            for prod_id, stock in products.items():
+                all_products.add(prod_id)
+                if prod_id not in inventory_summary:
+                    inventory_summary[prod_id] = {}
+                inventory_summary[prod_id][wh] = stock
+        
+        # For a simpler summary for the UI, let's just send the raw INVENTORY_DB
+        # or a slightly processed version. The above is a bit complex for a quick viz.
+        # Let's send total stock per product and stock per warehouse.
+        
+        processed_inventory_summary = {}
+        for warehouse, stock_data in INVENTORY_DB.items():
+            for product, quantity in stock_data.items():
+                if product not in processed_inventory_summary:
+                    processed_inventory_summary[product] = {}
+                processed_inventory_summary[product][warehouse] = quantity
+
+        return ContextualDataResponse(
+            inventory_summary=processed_inventory_summary,  # Sending detailed breakdown
+            warehouse_count=len(INVENTORY_DB),
+            product_count=len(all_products),
+            customer_count=len(MOCK_CRM_DB),
+            zone_count=len(set(ZIP_TO_ZONE_DB.values()))  # Count unique zones
+        )
+    except Exception as e:
+        logger.error(f"API_EXCEPTION: Error in /contextual-data: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error fetching contextual data: {str(e)}")
 
 if __name__ == "__main__":
     # This allows running the server directly with `python api_server.py`
