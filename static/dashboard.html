@@ -97,6 +97,68 @@
         .context-item h4 { font-weight: 600; color: #111827; margin-bottom: 0.25rem;}
         .context-item p { font-size: 1.5rem; font-weight: 700; color: #4f46e5;}
         .inventory-table th, .inventory-table td { padding: 0.5rem; text-align: left; border: 1px solid #e5e7eb; font-size: 0.8rem;}
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            position: relative;
+            background-color: white;
+            margin: 10% auto;
+            padding: 1.5rem;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .modal-close {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+        }
+        .modal-close:hover {
+            color: #374151;
+        }
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 1rem;
+        }
+        .modal-body {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .context-item {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .context-item:hover {
+            background-color: #f3f4f6;
+        }
+        .detail-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .detail-list li {
+            padding: 0.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .detail-list li:last-child {
+            border-bottom: none;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -114,12 +176,13 @@
             </div>
             <div id="contextDataDisplay" class="hidden">
                 <div class="context-grid mb-4">
-                    <div class="context-item"><h4>Warehouses</h4><p id="warehouseCountCtx">-</p></div>
-                    <div class="context-item"><h4>Tracked Products</h4><p id="productCountCtx">-</p></div>
-                    <div class="context-item"><h4>Customers</h4><p id="customerCountCtx">-</p></div>
-                    <div class="context-item"><h4>Shipping Zones</h4><p id="zoneCountCtx">-</p></div>
+                    <div class="context-item" data-type="full_customers"><h4>Customers DB</h4><button class="btn btn-primary btn-sm">View</button></div>
+                    <div class="context-item" data-type="full_inventory"><h4>Inventory DB</h4><button class="btn btn-primary btn-sm">View</button></div>
+                    <div class="context-item" data-type="full_shipping_options"><h4>Shipping Options DB</h4><button class="btn btn-primary btn-sm">View</button></div>
+                    <div class="context-item" data-type="full_zip_to_zone"><h4>ZIP to Zone Map</h4><button class="btn btn-primary btn-sm">View</button></div>
+                    <div class="context-item" data-type="full_product_weights"><h4>Product Weights DB</h4><button class="btn btn-primary btn-sm">View</button></div>
                 </div>
-                <h3 class="text-lg font-medium text-gray-700 mb-2">Inventory Overview (Product by Warehouse)</h3>
+                <h3 id="tableTitle" class="text-lg font-medium text-gray-700 mb-2">Inventory Overview (Product by Warehouse)</h3>
                 <div id="inventoryDetailsCtx" class="overflow-x-auto max-h-60 bg-gray-50 p-3 rounded">
                 </div>
             </div>
@@ -271,6 +334,9 @@
         let currentOrderPayload = {}; 
         let currentContextData = null; // To store fetched contextual data
 
+        // Store contextual data
+        let contextualData = null;
+
         function resetUIState() {
             resultsSection.classList.add('hidden');
             recommendationDetails.classList.add('hidden');
@@ -349,63 +415,127 @@
             });
         }
         
+        function renderInventoryTable(filter = null) {
+            if (!contextualData) return;
+            let products = contextualData.products;
+            let warehouses = contextualData.warehouses;
+            let inventory = contextualData.inventory_summary;
+
+            if (filter) {
+                if (filter.type === 'warehouses') {
+                    warehouses = [filter.value];
+                } else if (filter.type === 'products') {
+                    products = [filter.value];
+                }
+            }
+
+            const inventoryTable = document.createElement('table');
+            inventoryTable.className = 'inventory-table';
+            inventoryTable.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        ${warehouses.map(wh => `<th>${wh}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${products.map(prod => `
+                        <tr>
+                            <td>${prod}</td>
+                            ${warehouses.map(wh => 
+                                `<td>${inventory[prod]?.[wh] || 0}</td>`
+                            ).join('')}
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+            inventoryDetailsCtx.innerHTML = '';
+            inventoryDetailsCtx.appendChild(inventoryTable);
+        }
+
+        // Render table for each database type
+        function renderTable(type) {
+            if (!contextualData) return;
+            let html = '';
+            let title = '';
+            if (type === 'full_inventory' || !type) {
+                // Default: Inventory Overview
+                title = 'Inventory Overview (Product by Warehouse)';
+                html = renderInventoryTableHTML();
+            } else if (type === 'full_customers') {
+                title = 'Customers Database';
+                html = `<table class='inventory-table'><thead><tr><th>ID</th><th>Name</th><th>ZIP</th><th>Tier</th></tr></thead><tbody>` +
+                    Object.entries(contextualData.full_customers).map(([id, c]) =>
+                        `<tr><td>${id}</td><td>${c.name}</td><td>${c.zip_code}</td><td>${c.tier}</td></tr>`
+                    ).join('') + '</tbody></table>';
+            } else if (type === 'full_shipping_options') {
+                title = 'Shipping Options Database';
+                html = `<table class='inventory-table'><thead><tr><th>Location</th><th>Zone</th><th>Product</th><th>Carrier</th><th>Cost</th><th>Days</th><th>CO2 (kg)</th></tr></thead><tbody>`;
+                Object.entries(contextualData.full_shipping_options).forEach(([loc, zones]) => {
+                    Object.entries(zones).forEach(([zone, options]) => {
+                        options.forEach(opt => {
+                            html += `<tr><td>${loc}</td><td>${zone}</td><td>${opt[0]}</td><td>${opt[1]}</td><td>${opt[2]}</td><td>${opt[3]}</td><td>${opt[4]}</td></tr>`;
+                        });
+                    });
+                });
+                html += '</tbody></table>';
+            } else if (type === 'full_zip_to_zone') {
+                title = 'ZIP to Zone Mapping';
+                html = `<table class='inventory-table'><thead><tr><th>ZIP Code</th><th>Zone</th></tr></thead><tbody>` +
+                    Object.entries(contextualData.full_zip_to_zone).map(([zip, zone]) =>
+                        `<tr><td>${zip}</td><td>${zone}</td></tr>`
+                    ).join('') + '</tbody></table>';
+            } else if (type === 'full_product_weights') {
+                title = 'Product Weights Database';
+                html = `<table class='inventory-table'><thead><tr><th>Product</th><th>Weight (kg)</th></tr></thead><tbody>` +
+                    Object.entries(contextualData.full_product_weights).map(([prod, w]) =>
+                        `<tr><td>${prod}</td><td>${w}</td></tr>`
+                    ).join('') + '</tbody></table>';
+            }
+            document.getElementById('tableTitle').textContent = title;
+            inventoryDetailsCtx.innerHTML = html;
+        }
+
+        // Render inventory table as HTML (default)
+        function renderInventoryTableHTML() {
+            let products = contextualData.products;
+            let warehouses = contextualData.warehouses;
+            let inventory = contextualData.inventory_summary;
+            return `<table class='inventory-table'><thead><tr><th>Product</th>${warehouses.map(wh => `<th>${wh}</th>`).join('')}</tr></thead><tbody>` +
+                products.map(prod => `<tr><td>${prod}</td>${warehouses.map(wh => `<td>${inventory[prod]?.[wh] || 0}</td>`).join('')}</tr>`).join('') +
+                '</tbody></table>';
+        }
+
+        // Update loadContextualData to use renderTable
         async function loadContextualData() {
-            contextLoadingSpinner.classList.remove('hidden');
+            contextLoadingSpinner.style.display = 'block';
             contextErrorDisplay.classList.add('hidden');
             contextDataDisplay.classList.add('hidden');
             try {
                 const response = await fetch('/contextual-data');
                 if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                currentContextData = await response.json(); // Store for later use
-                
-                warehouseCountCtx.textContent = currentContextData.warehouse_count;
-                productCountCtx.textContent = currentContextData.product_count;
-                customerCountCtx.textContent = currentContextData.customer_count;
-                zoneCountCtx.textContent = currentContextData.zone_count;
-
-                // Populate Product ID dropdown
-                productIdSelect.innerHTML = ''; // Clear existing
-                if (currentContextData.inventory_summary) {
-                    Object.keys(currentContextData.inventory_summary).forEach(productId => {
+                contextualData = await response.json();
+                // Restore original product dropdown logic
+                productIdSelect.innerHTML = '';
+                if (contextualData.inventory_summary) {
+                    Object.keys(contextualData.inventory_summary).forEach((productId, idx) => {
                         const option = document.createElement('option');
                         option.value = productId;
                         option.textContent = productId;
+                        if (idx === 0) option.selected = true; // Default to first product
                         productIdSelect.appendChild(option);
                     });
                 }
-
-                // Populate Inventory Table
-                inventoryDetailsCtx.innerHTML = '';
-                const table = document.createElement('table');
-                table.className = 'min-w-full inventory-table';
-                const thead = table.createTHead();
-                const headerRow = thead.insertRow();
-                headerRow.innerHTML = '<th>Product ID</th><th>Warehouse</th><th>Stock</th>';
-                const tbody = table.createTBody();
-
-                if (currentContextData.inventory_summary) {
-                    for (const [productId, warehouses] of Object.entries(currentContextData.inventory_summary)) {
-                        for (const [warehouse, stock] of Object.entries(warehouses)) {
-                            const row = tbody.insertRow();
-                            row.insertCell().textContent = productId;
-                            row.insertCell().textContent = warehouse;
-                            row.insertCell().textContent = stock;
-                        }
-                    }
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="3" class="text-center text-gray-500 py-4">No inventory data available.</td></tr>';
-                }
-                inventoryDetailsCtx.appendChild(table);
-
+                renderTable('full_inventory'); // Default view
                 contextDataDisplay.classList.remove('hidden');
             } catch (error) {
-                console.error("Error fetching contextual data:", error);
+                console.error('Error loading contextual data:', error);
                 contextErrorMessage.textContent = error.message;
                 contextErrorDisplay.classList.remove('hidden');
             } finally {
-                contextLoadingSpinner.classList.add('hidden');
+                contextLoadingSpinner.style.display = 'none';
             }
         }
 
@@ -544,8 +674,16 @@
             }
         }
 
-        // Load contextual data when the page loads
-        document.addEventListener('DOMContentLoaded', loadContextualData);
+        // Add click handlers to database cards
+        document.addEventListener('DOMContentLoaded', function() {
+            loadContextualData();
+            document.querySelectorAll('.context-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const type = item.getAttribute('data-type');
+                    renderTable(type);
+                });
+            });
+        });
     </script>
 </body>
 </html>

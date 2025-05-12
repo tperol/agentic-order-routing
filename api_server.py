@@ -10,7 +10,7 @@ from typing import Dict, Any, List
 import uvicorn
 
 from src.agentic_order_routing.main import main
-from src.agentic_order_routing.mock_data import INVENTORY_DB, MOCK_CRM_DB, SHIPPING_OPTIONS_DB, ZIP_TO_ZONE_DB
+from src.agentic_order_routing.mock_data import INVENTORY_DB, MOCK_CRM_DB, SHIPPING_OPTIONS_DB, ZIP_TO_ZONE_DB, PRODUCT_WEIGHT_DB
 
 
 # --- Logging Setup ---
@@ -68,6 +68,16 @@ class ContextualDataResponse(BaseModel):
     product_count: int
     customer_count: int
     zone_count: int
+    warehouses: List[str]  # List of warehouse IDs
+    products: List[str]    # List of product IDs
+    customers: List[Dict[str, Any]]  # List of customer details
+    zones: List[str]       # List of zone IDs
+    # Add full mock databases
+    full_customers: Dict[str, Any]
+    full_inventory: Dict[str, Any]
+    full_shipping_options: Dict[str, Any]
+    full_zip_to_zone: Dict[str, Any]
+    full_product_weights: Dict[str, Any]
 
 # --- API Endpoints ---
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
@@ -168,12 +178,25 @@ async def get_contextual_data_endpoint():
                     processed_inventory_summary[product] = {}
                 processed_inventory_summary[product][warehouse] = quantity
 
+        # Get unique zones from ZIP_TO_ZONE_DB
+        unique_zones = set(ZIP_TO_ZONE_DB.values())
+
         return ContextualDataResponse(
             inventory_summary=processed_inventory_summary,  # Sending detailed breakdown
             warehouse_count=len(INVENTORY_DB),
             product_count=len(all_products),
             customer_count=len(MOCK_CRM_DB),
-            zone_count=len(set(ZIP_TO_ZONE_DB.values()))  # Count unique zones
+            zone_count=len(unique_zones),
+            warehouses=list(INVENTORY_DB.keys()),
+            products=list(all_products),
+            customers=[{"id": cust_id, **details} for cust_id, details in MOCK_CRM_DB.items()],
+            zones=list(unique_zones),
+            # Add full mock databases
+            full_customers=MOCK_CRM_DB,
+            full_inventory=INVENTORY_DB,
+            full_shipping_options=SHIPPING_OPTIONS_DB,
+            full_zip_to_zone=ZIP_TO_ZONE_DB,
+            full_product_weights=PRODUCT_WEIGHT_DB
         )
     except Exception as e:
         logger.error(f"API_EXCEPTION: Error in /contextual-data: {e}", exc_info=True)
