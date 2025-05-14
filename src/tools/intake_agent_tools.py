@@ -3,7 +3,7 @@
 
 import json
 import logging
-from agentic_order_routing.mock_data import MOCK_CRM_DB # Importing the customer database
+from fabric_data import MOCK_CRM_DB # Corrected: Import from fabric_data
 from agents import function_tool
 
 logger = logging.getLogger("agent_workflow")
@@ -103,4 +103,4 @@ if __name__ == '__main__':
     else:
         print("\n[Test 5] Skipped: cust101 not found in MOCK_CRM_DB for modification.")
 
-    print("\n--- End of intake_agent_tools.py tests ---")
+    print("\n--- End of intake_agent_tools.py tests ---") 

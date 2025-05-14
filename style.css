@@ -1,0 +1,569 @@
+body {
+    font-family: sans-serif;
+    margin: 0;
+    background-color: #f4f4f4;
+    color: #333;
+    display: flex; /* Make body a flex container */
+    flex-direction: column; /* Stack header and page-container vertically */
+    min-height: 100vh; /* Ensure body takes at least full viewport height */
+}
+
+header {
+    background-color: #1a1a1a;
+    color: #fff;
+    padding: 1em 0;
+    text-align: center;
+    /* position: fixed; /* If header should be sticky */
+    /* width: 100%; */
+    /* z-index: 1000; */
+}
+
+.page-container { 
+    display: flex; 
+    flex-grow: 1; /* Allows this container to fill remaining vertical space */
+    /* margin-top: 60px; /* Example: Adjust if header is fixed height */
+}
+
+.sidebar { /* Main navigation sidebar */
+    width: 250px;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+    padding: 1em;
+    /* margin-right: 1em; -- No longer needed as flexbox handles spacing */
+    /* border-radius: 5px; -- Removing this for a more integrated look */
+    flex-shrink: 0; /* Prevent sidebar from shrinking */
+}
+
+.sidebar .logo {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 1em;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar .logo .icon {
+    margin-right: 0.3em;
+    font-size: 1.2em;
+}
+
+.sidebar h2 {
+    margin-top: 0;
+}
+
+.sidebar ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    padding: 0.5em 0;
+    cursor: pointer;
+}
+
+.sidebar ul li:hover {
+    background-color: #333; /* Darker hover for dark background */
+}
+
+/* Style for the active main navigation item */
+.sidebar > ul > li.active > span.nav-item-label,
+.sidebar > ul > li.active > a, /* If we change main items to <a> tags */
+.sidebar > ul > li.active {
+    color: #fff; /* White text for active main item */
+    font-weight: bold;
+}
+
+.sidebar ul li.has-submenu > .nav-item-label {
+    display: block;
+}
+
+.sidebar ul .submenu {
+    list-style-type: none;
+    padding-left: 1.5em;
+    margin-top: 0.5em;
+    display: none;
+}
+
+.sidebar ul li.has-submenu.open .submenu { /* Example: show if .open class is present */
+    display: block;
+}
+
+/* Show Orders submenu when the parent li#main-nav-orders is active */
+.sidebar ul li#main-nav-orders.active .submenu {
+    display: block; 
+}
+
+.main-content-area { /* Middle content area */
+    flex-grow: 1; /* Allows main content to take available space */
+    background-color: #fff; /* Default background, individual pages can override */
+    padding: 1.5em; /* Padding for content within this area */
+    overflow-y: auto; /* Allow scrolling for main content if it overflows */
+}
+
+.fabric-intelligence-sidebar {
+    width: 320px; /* Width for the chat sidebar */
+    background-color: #f8f9fa; /* Light grey background as per image */
+    border-left: 1px solid #e0e0e0; /* Separator line */
+    padding: 1em;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0; /* Prevent chat sidebar from shrinking */
+}
+
+.fi-chat-header {
+    display: flex;
+    align-items: center;
+    padding-bottom: 0.8em;
+    margin-bottom: 0.8em;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.fi-chat-icon {
+    width: 24px; /* Placeholder for actual icon */
+    height: 24px;
+    background-image: url('https://api.iconify.design/mdi/brain.svg?color=%236c757d'); /* Example brain icon */
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    margin-right: 0.5em;
+}
+
+.fi-chat-header h3 {
+    margin: 0;
+    font-size: 1.1em;
+    color: #333;
+    font-weight: 600;
+}
+
+.fi-chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0.5em 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8em;
+}
+
+.fi-chat-message {
+    padding: 0.6em 1em;
+    border-radius: 12px;
+    max-width: 90%;
+    line-height: 1.4;
+    font-size: 0.9em;
+}
+
+.fi-chat-message.agent-message {
+    background-color: #e9ecef; /* Slightly different agent message background */
+    color: #333;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    white-space: pre-wrap;
+}
+
+.fi-chat-message.agent-message p {
+    margin: 0.3em 0;
+}
+
+.fi-chat-message.agent-message strong {
+    font-weight: 600;
+}
+
+.fi-chat-message.agent-message small {
+    font-size: 0.85em;
+    color: #555;
+}
+
+button.fi-suggestion-button {
+    background-color: #fff;
+    color: #007bff;
+    border: 1px solid #007bff;
+    padding: 0.4em 0.8em;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.85em;
+    margin-top: 0.5em;
+    display: block; /* Or inline-block */
+}
+button.fi-suggestion-button:hover {
+    background-color: #f0f0f0;
+}
+
+.fi-chat-message.user-message { /* For user messages when implemented */
+    background-color: #007bff;
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+}
+
+.fi-chat-message.working {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+
+.fi-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #6c757d;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: fi-spin 1s linear infinite;
+}
+
+@keyframes fi-spin {
+    to { transform: rotate(360deg); }
+}
+
+.fi-chat-input-area {
+    display: flex;
+    padding-top: 1em;
+    border-top: 1px solid #e0e0e0;
+    align-items: center;
+}
+
+.fi-chat-input-area input[type="text"] {
+    flex-grow: 1;
+    padding: 0.6em 0.8em;
+    border: 1px solid #ced4da;
+    border-radius: 20px;
+    margin-right: 0.5em;
+    font-size: 0.9em;
+}
+
+.fi-chat-input-area input[type="text"]:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.fi-chat-input-area button#fi-send-chat-button {
+    background-color: transparent;
+    border: none;
+    color: #6c757d;
+    padding: 0.5em;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fi-chat-input-area button#fi-send-chat-button .fi-send-icon {
+    font-size: 1.5em; /* Adjust icon size */
+}
+
+.fi-chat-input-area button#fi-send-chat-button:hover {
+    background-color: #e9ecef;
+}
+
+/* Styles for Inventory Page */
+.inventory-container {
+    padding: 0; /* Reset padding if main-content-area handles it */
+}
+
+.inventory-table-section {
+    padding: 0; /* Reset padding as its parent or .table-scroll-wrapper will handle it */
+}
+
+.inventory-table-header h2 {
+    font-size: 2em;
+    font-weight: bold;
+    margin-bottom: 1em; /* Space between title and table area */
+    color: #000; 
+}
+
+.table-scroll-wrapper {
+    max-height: calc(100vh - 150px); /* Adjust based on header, title, and other fixed heights *within* the main-content-area */
+    /* This might need to be more dynamic if chat sidebar height changes things */
+    overflow-y: auto;
+    border-top: 1px solid #eee; /* Add a separator line above the scrolling table headers */
+}
+
+.inventory-table-section table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.inventory-table-section th,
+.inventory-table-section td {
+    text-align: left;
+    padding: 0.8em 0.5em;
+    border-bottom: 1px dotted #ddd; /* Dotted line as per image */
+    vertical-align: middle;
+}
+
+.inventory-table-section th {
+    color: #555;
+    font-weight: bold;
+    font-size: 0.8em;
+    text-transform: uppercase;
+    padding-right: 15px; /* Space for sort arrow */
+    position: relative; /* For positioning the arrow */
+}
+
+.sort-arrow {
+    /* position: absolute; -- Decided against absolute for easier alignment */
+    /* right: 5px; */
+    /* top: 50%; */
+    /* transform: translateY(-50%); */
+    font-size: 0.8em;
+    margin-left: 0.3em;
+    color: #888;
+}
+
+.sku-cell {
+    display: flex;
+    align-items: center;
+    /* No image, so no margin-right needed on an image element */
+}
+
+.sku-details {
+    display: flex;
+    flex-direction: column;
+    /* No image, so sku-details can take full space of the cell part if needed */
+}
+
+.sku-name {
+    font-weight: bold;
+    color: #333;
+    font-size: 0.9em;
+}
+
+/* New class for clickable SKU name in inventory */
+.sku-name-link {
+    font-weight: bold;
+    color: #007bff; /* Blue link color */
+    cursor: pointer;
+    font-size: 0.9em;
+}
+.sku-name-link:hover {
+    text-decoration: underline;
+}
+
+.sku-code {
+    color: #777;
+    font-size: 0.8em;
+}
+
+/* Styles for Orders Page */
+.orders-container {
+    width: 100%;
+}
+
+.orders-main-content {
+    flex-grow: 1;
+    padding: 1em;
+}
+
+.orders-header {
+    margin-bottom: 1.5em;
+}
+
+.orders-header h2 {
+    font-size: 1.8em; /* "Manage orders" title */
+    font-weight: bold;
+    color: #000;
+    margin-top: 0; /* Aligns with top of secondary nav if they were side-by-side */
+    margin-bottom: 0.5em;
+}
+
+.orders-sub-nav {
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 0.8em;
+}
+
+.orders-sub-nav a {
+    text-decoration: none;
+    color: #555;
+    padding: 0.5em 1em 0.8em 0; /* Give some right padding, bottom padding for underline */
+    margin-right: 1em;
+    font-size: 0.9em;
+}
+
+.orders-sub-nav a.active {
+    color: #000;
+    font-weight: bold;
+    border-bottom: 2px solid #000; /* Black underline for active sub-nav */
+}
+
+/* Reusing some inventory table styles but can override */
+.orders-main-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1em; /* Space from sub-nav */
+}
+
+.orders-main-content th,
+.orders-main-content td {
+    text-align: left;
+    padding: 0.8em 0.5em;
+    border-bottom: 1px solid #eee; /* Lighter border for rows */
+    vertical-align: top; /* Align content to top for multi-line cells */
+    font-size: 0.9em;
+}
+
+.orders-main-content th {
+    color: #555;
+    font-weight: bold; /* Already bold, but explicit */
+    font-size: 0.85em;
+    /* text-transform: uppercase; -- Not in image */
+}
+
+.order-number-link {
+    color: #007bff; /* Standard blue link color */
+    text-decoration: none;
+}
+.order-number-link:hover {
+    text-decoration: underline;
+}
+
+.customer-details .customer-name {
+    display: block;
+    font-weight: normal; /* Image doesn't show bold customer name */
+    color: #333;
+}
+
+.customer-details .customer-email {
+    display: block;
+    color: #777;
+    font-size: 0.9em;
+}
+
+.status-badge {
+    padding: 0.3em 0.7em;
+    border-radius: 0.25rem; /* More rectangular badges */
+    font-size: 0.75em; /* Slightly smaller */
+    font-weight: bold; 
+    display: inline-block;
+    text-transform: capitalize; /* Keep this if statuses are single words e.g. 'created' */
+    /* text-transform: none; -- Use if statuses are multi-word e.g. 'Low stock' and should keep casing */
+    line-height: 1; /* Ensure consistent height */
+}
+
+.status-badge.status-created {
+    background-color: #007bff; /* Blue for Created */
+    color: white;
+}
+
+.status-badge.status-authorized {
+    background-color: #28a745; /* Green for Authorized */
+    color: white;
+}
+
+/* Inventory Status Badges */
+.status-badge.status-low-stock {
+    background-color: #fff3cd; /* Light yellow */
+    color: #856404; /* Dark yellow text */
+    border: 1px solid #ffeeba;
+}
+
+.status-badge.status-available {
+    background-color: #d4edda; /* Light green */
+    color: #155724; /* Dark green text */
+    border: 1px solid #c3e6cb;
+}
+
+.status-badge.status-backorder {
+    background-color: #d1ecf1; /* Light blue/cyan */
+    color: #0c5460; /* Dark blue/cyan text */
+    border: 1px solid #bee5eb;
+}
+
+.status-badge.status-preorder {
+    background-color: #cce5ff; /* Lighter blue */
+    color: #004085; /* Darker blue text */
+    border: 1px solid #b8daff;
+}
+
+/* Styles for Home Page */
+.home-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: auto; /* Was calc(100vh - 150px), now flexible as chat is gone */
+    text-align: center;
+    padding: 2em;
+}
+
+.welcome-message h1 {
+    font-size: 2em;
+    color: #333;
+    margin-bottom: 1.5em;
+}
+
+.sidebar ul .submenu li {
+    padding: 0.5em 0;
+    font-size: 0.9em;
+    color: #bbb;
+    cursor: pointer;
+}
+
+.sidebar ul .submenu li:hover,
+.sidebar ul .submenu li.active-submenu-item {
+    color: #fff;
+    font-weight: normal;
+}
+
+/* Styles for Customers Page */
+.customers-container h2 {
+    font-size: 2em;
+    font-weight: bold;
+    margin-bottom: 1em;
+    color: #000;
+}
+
+.customers-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1em;
+}
+
+.customers-table th,
+.customers-table td {
+    text-align: left;
+    padding: 0.8em 0.5em;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.customers-table th {
+    color: #555;
+    font-weight: bold;
+    font-size: 0.85em;
+    background-color: #f8f9fa;
+}
+
+.loading-data p,
+.error-message {
+    color: #777;
+    font-style: italic;
+}
+.error-message {
+    color: #d9534f; /* Bootstrap danger color */
+}
+
+/* Tier Status Badges (can reuse .status-badge general styles) */
+.status-badge.status-tier-gold {
+    background-color: #ffc107; /* Gold/Yellow */
+    color: #333;
+    border: 1px solid #ffb300;
+}
+
+.status-badge.status-tier-silver {
+    background-color: #c0c0c0; /* Silver */
+    color: #333;
+    border: 1px solid #b0b0b0;
+}
+
+.status-badge.status-tier-bronze {
+    background-color: #cd7f32; /* Bronze */
+    color: white;
+    border: 1px solid #b8732e;
+}
+
+.status-badge.status-tier-standard {
+    background-color: #6c757d; /* Grey for standard or unspecified */
+    color: white;
+    border: 1px solid #5a6268;
+} 

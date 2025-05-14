@@ -33,8 +33,9 @@ This POC exemplifies the "intelligent execution" layer of a COS for the order fu
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": { "primaryColor": "#f4f4f4", "primaryTextColor": "#222", "secondaryColor": "#e0e0e0", "tertiaryColor": "#bdbdbd", "fontSize": "16px" }}}%%
 graph TD
-    subgraph "User / Shopify OMS"
-        A[Raw Customer Order and Business Priority]
+    subgraph "Web Interface"
+        UI[Web UI]
+        API[API Server]
     end
 
     subgraph "Data Stores"
@@ -48,12 +49,16 @@ graph TD
         OIA[OrderIntakeAgent]
         ORDA[OrderRoutingDecisionAgent OpenAI Assistant]
 
-        tool_cz[get_customer_zone Tool]
-        tool_inv[get_inventory Tool Inventory Agent]
-        tool_so[get_shipping_options Tool Logistics Agent]
+        subgraph "Tools"
+            tool_cz[get_customer_zone Tool]
+            tool_inv[get_inventory Tool]
+            tool_so[get_shipping_options Tool]
+            tool_priority[get_business_priority Tool]
+        end
     end
 
-    A --> OIA
+    UI --> API
+    API --> OIA
     OIA -->|Processed Order| ORDA
     OIA -.-> DB1
 
@@ -66,19 +71,22 @@ graph TD
     ORDA -- Calls --> tool_so
     tool_so -.-> DB3
 
-    ORDA --> Z[Routing Recommendation and Explanation to **OMS Operator**]
+    ORDA -- Calls --> tool_priority
+
+    ORDA -->|Routing Decision| API
+    API -->|Display Results| UI
 
     %% Custom styles for readability
     classDef default fill:#f4f4f4,stroke:#333,stroke-width:2px,color:#222,font-size:16px;
     classDef agent fill:#cce5ff,stroke:#333,stroke-width:2px,color:#222;
     classDef tool fill:#ffe0b2,stroke:#333,stroke-width:2px,color:#222;
     classDef data fill:#e0e0e0,stroke:#333,stroke-width:2px,color:#222;
-    classDef io fill:#b2dfdb,stroke:#333,stroke-width:2px,color:#222;
+    classDef web fill:#b2dfdb,stroke:#333,stroke-width:2px,color:#222;
 
     class OIA,ORDA agent;
-    class tool_cz,tool_inv,tool_so tool;
+    class tool_cz,tool_inv,tool_so,tool_priority tool;
     class DB1,DB2,DB3,DB4 data;
-    class A,Z io;
+    class UI,API web;
 ```
 
 ## 4. Conceptual Agent Roles

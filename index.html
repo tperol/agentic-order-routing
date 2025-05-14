@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Landing Page</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Our Product</h1>
+    </header>
+    <div class="page-container">
+        <aside class="sidebar">
+            <div class="logo"><span class="icon">⣿</span> fabric</div>
+            <ul>
+                <li id="main-nav-home">Home</li>
+                <li id="main-nav-inventory">Inventory</li>
+                <li id="main-nav-orders" class="has-submenu">
+                    <span class="nav-item-label">Orders</span>
+                    <ul class="submenu">
+                        <li id="sub-nav-policy">Policy</li>
+                        <li id="sub-nav-fulfillment">Fulfillment</li>
+                        <li id="sub-nav-activity-log">Activity Log</li>
+                    </ul>
+                </li>
+                <li id="main-nav-customers">Customers</li>
+            </ul>
+        </aside>
+        <main class="main-content-area" id="main-content-area">
+            <h2>Featured Products</h2>
+            <p>Main content goes here...</p>
+        </main>
+        <aside class="fabric-intelligence-sidebar" id="fabric-intelligence-chat">
+            <div class="fi-chat-header">
+                <span class="fi-chat-icon"></span>
+                <h3>fabric intelligence</h3>
+            </div>
+            <div class="fi-chat-messages" id="fi-chat-messages-area">
+                <div class="fi-chat-message agent-message">
+                    <p>Here's my suggested order fulfillment rule change for you to apply:</p>
+                    <p><strong>Optimize for One-Package Deliveries</strong></p>
+                    <p><small>This rule change improves order consolidation and reduces your shipping average overall.</small></p>
+                    <button class="fi-suggestion-button">Apply suggestion</button>
+                </div>
+                 <div class="fi-chat-message agent-message working">
+                    <span class="fi-spinner"></span> Working on that.
+                </div>
+            </div>
+            <div class="fi-chat-input-area">
+                <input type="text" id="fi-chat-input" placeholder="Ask me for anything...">
+                <button id="fi-send-chat-button"><span class="fi-send-icon">&#x2191;</span></button>
+            </div>
+        </aside>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 
