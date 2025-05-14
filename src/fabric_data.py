@@ -59,7 +59,8 @@ FABRIC_INVENTORY_DATA = [
         "status": "Preorder",
         "availToPurchase": 0, # Not available for immediate purchase
         "availToBackorder": 0,
-        "availToPreorder": 135
+        "availToPreorder": 135,
+        "eta": "2025-08-15"
     },
     {
         "skuCode": "B001-CHAIR-RED",
@@ -99,7 +100,8 @@ FABRIC_INVENTORY_DATA = [
         "status": "Backorder",
         "availToPurchase": 30,
         "availToBackorder": 50,
-        "availToPreorder": 25
+        "availToPreorder": 25,
+        "eta": "2025-07-28"
     },
     {
         "skuCode": "T009-TABLE-WHT",
@@ -279,73 +281,61 @@ PRODUCT_WEIGHT_DB = {
     "product_A": 2.0, "product_B": 1.5, "product_C": 3.0, "product_D": 0.5
 }
 
-# 6. Mock Orders Database (Expanded for Detail View)
+# 6. Mock Orders Database (Expanded for Detail View & Main Table - Corrected Order IDs)
 FABRIC_ORDERS_DATA = {
-    "6110822858950": { # New order from image
+    "6110822858950": { 
         "orderId": "6110822858950",
-        "displayOrderId": "#6110822858950", # For UI display
-        "status": "Ready for pick up", # Overall order status
+        "displayOrderId": "#6110822858950", 
+        "status": "Ready for processing",
+        "paymentStatus": "Paid",
         "orderType": "WEB",
         "dateCreated": "Mar 13, 2025, 1:22 PM",
-        "internalOrderId": "67d314438fc5cd1f8f8c58f3", # Internal ID shown in UI
-        "customerName": "Michelle M", # Example, link to MOCK_CRM_DB if needed
+        "internalOrderId": "67d314438fc5cd1f8f8c58f3",
+        "customerName": "Michelle M",
         "customerEmail": "michelle.m@example.com",
+        "customerId": "cust001",
         "orderSummary": {
-            "subtotal": "1390.00",
+            "subtotal": "150.00",
             "discount": "0.00",
-            "shipping": "0.00", # For pick up
-            "fees": "0.00", 
+            "shipping": "0.00",
+            "fees": "0.00",
             "adjustments": "0.00",
-            "taxes": "121.63",
-            "total": "1511.63",
+            "taxes": "12.00",
+            "total": "162.00",
             "currency": "USD"
         },
         "shippingGroups": [
             {
-                "groupTitle": "Shipping Group 1 of 1",
-                "type": "Pick Up",
-                "pickupDetails": {
-                    "pickUpBy": "Michelle M",
-                    "pickUpLocation": "Hudson Yards"
-                },
+                "groupTitle": "Shipment Group 1",
+                "type": "Delivery",
+                "deliveryAddress": "123 Main St, Anytown, USA 90210",
                 "lineItems": [
                     {
-                        "sku": "10001",
-                        "productName": "Elegant Evening Gown / Black Silk",
-                        "imageUrl": "https://via.placeholder.com/60x80/000000/FFFFFF?text=Gown",
+                        "sku": "product_A",
+                        "productName": "Standard Product A",
+                        "imageUrl": "https://via.placeholder.com/60x80/cccccc/000000?text=ProdA",
                         "quantity": 1,
-                        "itemTotal": "595.00",
+                        "itemTotal": "150.00",
                         "currency": "USD",
-                        "statusProgress": ["Created", "Allocated"] # Completed steps
-                    },
-                    {
-                        "sku": "901983",
-                        "productName": "Ruby Red Cocktail Dress / Satin",
-                        "imageUrl": "https://via.placeholder.com/60x80/FF0000/FFFFFF?text=Dress",
-                        "quantity": 1,
-                        "itemTotal": "795.00",
-                        "currency": "USD",
-                        "statusProgress": ["Created", "Allocated"] # Completed steps
+                        "statusProgress": ["Created"] 
                     }
                 ]
             }
         ]
     },
-    "XYZ789": { # Existing order, now expanded
-        "orderId": "XYZ789",
-        "displayOrderId": "#XYZ789",
+    "7201122334455": {
+        "orderId": "7201122334455",
+        "displayOrderId": "#7201122334455",
         "customerName": "Alice Wonderland",
         "customerEmail": "alice.w@example.com",
         "status": "Shipped", 
+        "paymentStatus": "Paid", 
         "orderType": "ONLINE",
         "dateCreated": "Jul 15, 2024, 10:30 AM",
         "internalOrderId": "aabbccddeeff001122334455",
         "trackingNumber": "TN123456789", 
         "estimatedDelivery": "2024-07-30",
-        "orderSummary": {
-            "subtotal": "250.00", "discount": "10.00", "shipping": "15.00", "fees": "0.00",
-            "adjustments": "0.00", "taxes": "20.00", "total": "275.00", "currency": "USD"
-        },
+        "orderSummary": { "subtotal": "250.00", "discount": "10.00", "shipping": "15.00", "fees": "0.00", "adjustments": "0.00", "taxes": "20.00", "total": "275.00", "currency": "USD" },
         "shippingGroups": [
             {
                 "groupTitle": "Shipment 1",
@@ -368,21 +358,19 @@ FABRIC_ORDERS_DATA = {
             }
         ]
     },
-    "ABC123": { # Existing order, now expanded
-        "orderId": "ABC123",
-        "displayOrderId": "#ABC123",
+    "8302233445566": {
+        "orderId": "8302233445566",
+        "displayOrderId": "#8302233445566",
         "customerName": "Bob The Builder",
         "customerEmail": "bob.b@example.net", 
         "status": "Processing", 
+        "paymentStatus": "Authorized",
         "orderType": "PHONE",
         "dateCreated": "Jul 20, 2024, 02:15 PM",
         "internalOrderId": "ffeeddccbbaa112233445566",
         "trackingNumber": None, 
         "estimatedDelivery": "2024-08-02",
-        "orderSummary": {
-            "subtotal": "75.00", "discount": "0.00", "shipping": "5.00", "fees": "1.00", 
-            "adjustments": "0.00", "taxes": "6.00", "total": "87.00", "currency": "USD"
-        },
+        "orderSummary": { "subtotal": "75.00", "discount": "0.00", "shipping": "5.00", "fees": "1.00",  "adjustments": "0.00", "taxes": "6.00", "total": "87.00", "currency": "USD" },
         "shippingGroups": [
             {
                 "groupTitle": "Shipment 1",
@@ -399,6 +387,34 @@ FABRIC_ORDERS_DATA = {
             }
         ]
     },
-    "DEF456": {"orderId": "DEF456", "displayOrderId": "#DEF456", "customerName": "Charlie Brown", "customerEmail": "charlie.b@example.org", "status": "Delivered", "orderType": "STORE", "dateCreated": "Jul 10, 2024, 09:00 AM", "internalOrderId": "112233445566778899aabb", "trackingNumber": "TN987654321", "estimatedDelivery": "2024-07-25", "orderSummary": {"subtotal": "50.00", "discount":"5.00", "shipping":"0.00", "fees":"0.00", "adjustments":"0.00", "taxes":"4.00", "total":"49.00", "currency":"USD"}, "shippingGroups":[]},
-    "GHI789": {"orderId": "GHI789", "displayOrderId": "#GHI789", "customerName": "Diana Prince", "customerEmail": "diana.p@example.com", "status": "Pending Payment", "orderType": "WEB", "dateCreated": "Jul 22, 2024, 05:00 PM", "internalOrderId": "ccddeeff11223344556677", "trackingNumber": None, "estimatedDelivery": "2024-08-05", "orderSummary": {"subtotal": "120.00", "discount":"0.00", "shipping":"10.00", "fees":"0.00", "adjustments":"0.00", "taxes":"9.60", "total":"139.60", "currency":"USD"}, "shippingGroups":[]}
+    "9403344556677": {
+        "orderId": "9403344556677", 
+        "displayOrderId": "#9403344556677", 
+        "customerName": "Charlie Brown", 
+        "customerEmail": "charlie.b@example.org", 
+        "status": "Delivered", 
+        "paymentStatus": "Paid", 
+        "orderType": "STORE", 
+        "dateCreated": "Jul 10, 2024, 09:00 AM", 
+        "internalOrderId": "112233445566778899aabb", 
+        "trackingNumber": "TN987654321", 
+        "estimatedDelivery": "2024-07-25", 
+        "orderSummary": {"subtotal": "50.00", "discount":"5.00", "shipping":"0.00", "fees":"0.00", "adjustments":"0.00", "taxes":"4.00", "total":"49.00", "currency":"USD"}, 
+        "shippingGroups":[]
+    },
+    "1054455667788": {
+        "orderId": "1054455667788", 
+        "displayOrderId": "#1054455667788", 
+        "customerName": "Diana Prince", 
+        "customerEmail": "diana.p@example.com", 
+        "status": "Pending Payment", 
+        "paymentStatus": "Pending", 
+        "orderType": "WEB", 
+        "dateCreated": "Jul 22, 2024, 05:00 PM", 
+        "internalOrderId": "ccddeeff11223344556677", 
+        "trackingNumber": None, 
+        "estimatedDelivery": "2024-08-05", 
+        "orderSummary": {"subtotal": "120.00", "discount":"0.00", "shipping":"10.00", "fees":"0.00", "adjustments":"0.00", "taxes":"9.60", "total":"139.60", "currency":"USD"}, 
+        "shippingGroups":[]
+    }
 } 

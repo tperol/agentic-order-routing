@@ -16,8 +16,15 @@ def load_instruction(filename):
 from tools.inventory_agent_tools import get_inventory_details_for_sku, get_overall_stock_for_product
 from tools.order_agent_tools import get_order_status_by_id, find_orders_for_customer
 
+# Import the new handoff target
+from .fulfillment_specialist_agents import handoff_to_preorder_backorder_agent 
+
 class AgentQueryInput(BaseModel):
     query: str
+    # This model is also used by preorder_backorder_agent handoff, 
+    # which can accept optional order_id and sku.
+    order_id: str | None = None 
+    sku: str | None = None
 
 async def log_fi_handoff(ctx, input_data):
     logger.info(f"Fabric Intelligence Handoff invoked. Context: {ctx}, Input: {input_data}")
@@ -58,6 +65,10 @@ fabric_intelligence_root_agent = Agent(
     name="FabricIntelligenceRootAgent",
     instructions=load_instruction("fabric_intelligence_root_agent_instructions.md"),
     tools=[], 
-    handoffs=[handoff_to_inventory_agent, handoff_to_order_agent],
+    handoffs=[
+        handoff_to_inventory_agent, 
+        handoff_to_order_agent,
+        handoff_to_preorder_backorder_agent
+    ],
     model=MODEL
 ) 

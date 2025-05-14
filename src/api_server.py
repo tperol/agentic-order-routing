@@ -59,6 +59,30 @@ def get_all_customers():
         logger.error(f"API_SERVER: Error handling /api/customers request: {e}", exc_info=True)
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/orders', methods=['GET'])
+def get_all_orders_summary():
+    try:
+        logger.info("API_SERVER: Request received for /api/orders (summary list)")
+        orders_summary_list = []
+        for order_id, details in FABRIC_ORDERS_DATA.items():
+            order_summary = details.get('orderSummary', {})
+            currency_symbol = "$" if order_summary.get('currency') == 'USD' else order_summary.get('currency', '')
+            order_total_str = f"{currency_symbol}{order_summary.get('total', '0.00')}"
+            
+            orders_summary_list.append({
+                "orderNumber": details.get("orderId"),
+                "customerName": details.get("customerName"),
+                "customerEmail": details.get("customerEmail"),
+                "orderTotal": order_total_str,
+                "orderStatus": details.get("status"),
+                "paymentStatus": details.get("paymentStatus", "Paid")
+            })
+        logger.info(f"API_SERVER: Returning summary for {len(orders_summary_list)} orders.")
+        return jsonify(orders_summary_list)
+    except Exception as e:
+        logger.error(f"API_SERVER: Error handling /api/orders request: {e}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/orders/<order_id>', methods=['GET'])
 def get_order_details(order_id):
     try:

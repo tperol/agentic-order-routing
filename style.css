@@ -566,4 +566,353 @@ button.fi-suggestion-button:hover {
     background-color: #6c757d; /* Grey for standard or unspecified */
     color: white;
     border: 1px solid #5a6268;
+}
+
+/* Styles for Order Details Page */
+.order-details-loading p {
+    color: #777;
+    font-style: italic;
+    text-align: center;
+    padding: 2em;
+}
+
+.order-details-page {
+    display: flex;
+    flex-direction: column;
+}
+
+.order-details-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1em;
+    margin-bottom: 1em;
+    border-bottom: 1px solid #eee;
+}
+
+.order-details-header h1 {
+    font-size: 1.8em;
+    margin: 0;
+    color: #333;
+}
+
+/* Reuse existing status-badge and add specifics if needed */
+.order-details-header .status-badge {
+    padding: 0.4em 0.8em;
+    font-size: 0.9em;
+}
+
+.status-badge.status-ready-for-pick-up {
+    background-color: #ffc107; /* Yellow */
+    color: #333;
+    border: 1px solid #e0a800;
+}
+
+.order-details-sub-nav {
+    display: flex;
+    gap: 1em;
+    margin-bottom: 1.5em;
+    border-bottom: 1px solid #ddd;
+}
+
+.order-details-sub-nav a {
+    text-decoration: none;
+    color: #555;
+    padding: 0.8em 0.5em;
+    font-size: 0.95em;
+    border-bottom: 3px solid transparent;
+}
+
+.order-details-sub-nav a.active,
+.order-details-sub-nav a:hover {
+    color: #007bff;
+    border-bottom-color: #007bff;
+}
+
+.order-details-body {
+    display: flex;
+    gap: 1.5em; /* Space between main content and summary sidebar */
+}
+
+.order-info-main {
+    flex-grow: 1; /* Takes up most space */
+}
+
+.order-basic-info {
+    background-color: #f8f9fa;
+    padding: 1em;
+    border-radius: 5px;
+    margin-bottom: 1.5em;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.8em;
+}
+
+.order-basic-info div {
+    font-size: 0.9em;
+}
+.order-basic-info div strong {
+    display: block;
+    color: #555;
+    margin-bottom: 0.2em;
+}
+
+.view-more-attributes-link {
+    display: inline-block;
+    margin-bottom: 1.5em;
+    color: #007bff;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+.view-more-attributes-link:hover {
+    text-decoration: underline;
+}
+
+.order-status-section {
+    background-color: #fff;
+    padding: 1.5em;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    margin-bottom: 1.5em;
+}
+
+.order-status-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1em;
+    cursor: pointer; /* If it's collapsible */
+}
+
+.order-status-section .section-header h3 {
+    margin: 0;
+    font-size: 1.3em;
+}
+
+.shipping-group h4 {
+    font-size: 1.1em;
+    margin-bottom: 0.8em;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+.shipping-group h4 .status-badge {
+    font-size: 0.7em;
+    padding: 0.2em 0.5em;
+}
+.status-badge.status-type-pick-up {
+    background-color: #6f42c1; /* Purple */
+    color: white;
+}
+.status-badge.status-type-delivery {
+    background-color: #17a2b8; /* Teal */
+    color: white;
+}
+
+.pickup-info, .delivery-info {
+    font-size: 0.9em;
+    color: #555;
+    margin-bottom: 1em;
+    padding-left: 1em; /* Indent details */
+    border-left: 3px solid #eee;
+}
+.pickup-info p, .delivery-info p {
+    margin: 0.3em 0;
+}
+
+.line-item {
+    display: flex;
+    align-items: center;
+    padding: 1em 0;
+    border-bottom: 1px dashed #eee;
+}
+.line-item:last-child {
+    border-bottom: none;
+}
+
+.line-item-image {
+    width: 60px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 1em;
+    background-color: #f0f0f0;
+}
+
+.line-item-details {
+    flex-grow: 1;
+}
+.line-item-sku {
+    font-size: 0.8em;
+    color: #777;
+    display: block;
+}
+.line-item-name {
+    font-size: 0.95em;
+    font-weight: 600;
+    color: #333;
+    margin: 0.2em 0;
+}
+.line-item-qty, .line-item-total {
+    font-size: 0.9em;
+    color: #555;
+}
+
+.line-item-progress {
+    width: 100%; /* Allow it to take more flexible width */
+    max-width: 300px; /* But cap it if needed */
+    margin-left: 1em;
+    overflow: hidden; /* To prevent very long labels from breaking layout if they don't wrap */
+}
+
+.progress-bar-container {
+    display: flex;
+    align-items: flex-start; /* Align items to the start for label alignment */
+    justify-content: space-between; /* Distribute space */
+    width: 100%;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    text-align: center;
+    flex-basis: 0; /* Allow steps to grow and shrink evenly */
+    flex-grow: 1;
+    min-width: 50px; /* Ensure a minimum width for each step label */
+}
+
+.progress-dot {
+    width: 14px; /* Slightly smaller dot */
+    height: 14px;
+    background-color: #ddd; 
+    border-radius: 50%;
+    margin-bottom: 0.4em; /* Increased space for label */
+    border: 2px solid #fff; 
+    z-index: 1;
+    flex-shrink: 0; /* Prevent dot from shrinking */
+}
+
+.progress-step.completed .progress-dot {
+    background-color: #28a745; /* Green for completed */
+}
+.progress-step.active .progress-dot {
+    /* Can add a different style for the last completed step if needed */
+    /* background-color: #007bff; */
+}
+.progress-step.next-step .progress-dot {
+     background-color: #ccc; /* Grey for upcoming */
+}
+
+.progress-label {
+    font-size: 0.7em; /* Slightly smaller label */
+    color: #777;
+    line-height: 1.2; /* Allow multi-line for long labels if needed */
+    word-break: keep-all; /* Try to keep words together, might need break-word for long single words */
+}
+.progress-step.completed .progress-label,
+.progress-step.active .progress-label {
+    color: #333;
+}
+
+.progress-connector {
+    flex-grow: 1;
+    height: 3px; /* Slightly thinner connector */
+    background-color: #ddd; 
+    margin: 0 -1px; 
+    margin-top: 6.5px; /* Align with center of dots */
+    z-index: 0;
+}
+
+.progress-connector.completed {
+    background-color: #28a745; /* Green for completed connector */
+}
+
+.order-summary-sidebar {
+    width: 280px; /* Fixed width for summary */
+    flex-shrink: 0;
+    background-color: #f8f9fa;
+    padding: 1.5em;
+    border-radius: 5px;
+    height: fit-content; /* So it doesn't stretch full page height */
+}
+
+.order-summary-sidebar h3 {
+    font-size: 1.3em;
+    margin-top: 0;
+    margin-bottom: 1em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5em;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9em;
+    margin-bottom: 0.6em;
+    color: #555;
+}
+.summary-item span:last-child {
+    font-weight: 600;
+    color: #333;
+}
+.summary-item.total span {
+    font-size: 1.1em;
+    font-weight: bold;
+}
+
+/* Status badge for order type (e.g., Pick Up) */
+.status-badge.status-type-pick-up,
+.status-badge.status-type-delivery {
+    font-size: 0.8em;
+    padding: .25em .5em;
+    border-radius: .2rem;
+}
+
+/* Ensure general status badge styling is available (from previous steps) */
+.status-badge {
+    padding: 0.3em 0.7em;
+    border-radius: 0.25rem;
+    font-size: 0.75em;
+    font-weight: bold; 
+    display: inline-block;
+    text-transform: capitalize;
+    line-height: 1;
+}
+
+.status-badge.status-shipped {
+    background-color: #17a2b8; /* Teal/Info Blue */
+    color: white;
+    border: 1px solid #117a8b;
+}
+
+.status-badge.status-processing {
+    background-color: #ffc107; /* Yellow (same as ready for pick up, or choose different) */
+    color: #333;
+    border: 1px solid #e0a800;
+}
+
+.status-badge.status-delivered {
+    background-color: #218838; /* Darker Green */
+    color: white;
+    border: 1px solid #1e7e34;
+}
+
+.status-badge.status-pending-payment {
+    background-color: #dc3545; /* Red/Danger */
+    color: white;
+    border: 1px solid #c82333;
+}
+
+.status-badge.status-paid {
+    background-color: #28a745; /* Green (same as authorized) */
+    color: white;
+    border: 1px solid #1e7e34;
+}
+
+.status-badge.status-pending {
+    background-color: #6c757d; /* Grey */
+    color: white;
+    border: 1px solid #5a6268;
 } 

@@ -84,55 +84,15 @@ function displayInventoryPage() {
     `;
 }
 
-// --- Mock Order Data ---
-const mockOrdersData = [
-    {
-        orderNumber: "8524792206",
-        customerName: "Savannah Nguyen",
-        customerEmail: "savannah349@gmail.com",
-        orderTotal: "$176.28",
-        orderStatus: "Created",
-        paymentStatus: "Authorized"
-    },
-    {
-        orderNumber: "6072232892",
-        customerName: "Wade Warren",
-        customerEmail: "wade.warren@hotmail.com",
-        orderTotal: "$128.41",
-        orderStatus: "Created",
-        paymentStatus: "Authorized"
-    },
-    {
-        orderNumber: "1641617565",
-        customerName: "Arlene McCoy",
-        customerEmail: "a.mccoy1930@yahoo.com",
-        orderTotal: "$300.00",
-        orderStatus: "Created",
-        paymentStatus: "Authorized"
-    },
-    {
-        orderNumber: "5101345246",
-        customerName: "Floyd Miles",
-        customerEmail: "floyd.miles123@gmail.com",
-        orderTotal: "$110.68",
-        orderStatus: "Created",
-        paymentStatus: "Authorized"
-    },
-    {
-        orderNumber: "6842018413",
-        customerName: "Darrell Steward",
-        customerEmail: "darrel.slo@hotmail.com",
-        orderTotal: "$328.85",
-        orderStatus: "Created",
-        paymentStatus: "Authorized"
-    }
-];
+// REMOVE the old hardcoded mockOrdersData constant.
+// const mockOrdersData = [ ... old data ... ];
 
-// --- Function to Display Orders Page ---
-function displayOrdersPage() {
+// --- Function to Display Orders Page (main table) ---
+async function displayOrdersPage() { // Make it async
     const mainContentArea = document.getElementById('main-content-area');
     if (!mainContentArea) return;
 
+    // Initial HTML with loading state
     mainContentArea.innerHTML = `
         <div class="orders-container">
             <section class="orders-main-content">
@@ -145,39 +105,183 @@ function displayOrdersPage() {
                         <a href="#">Invoice</a>
                     </div>
                 </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Order Number</th>
-                            <th>Customer Name</th>
-                            <th>Order Total</th>
-                            <th>Order Status</th>
-                            <th>Payment Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${mockOrdersData.map(order => `
-                            <tr>
-                                <td><a href="#" class="order-number-link">${order.orderNumber}</a></td>
-                                <td>
-                                    <div class="customer-details">
-                                        <span class="customer-name">${order.customerName}</span>
-                                        <span class="customer-email">${order.customerEmail}</span>
-                                    </div>
-                                </td>
-                                <td>${order.orderTotal}</td>
-                                <td><span class="status-badge status-${order.orderStatus.toLowerCase()}">${order.orderStatus}</span></td>
-                                <td><span class="status-badge status-${order.paymentStatus.toLowerCase()}">${order.paymentStatus}</span></td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
+                <div id="orders-table-area" class="loading-data">
+                    <p>Loading orders...</p>
+                </div>
             </section>
         </div>
     `;
 
-    // Future: Add event listeners for submenu items in main sidebar if they load different content
-    // For now, clicking "Orders" (main nav) loads the "Manage Orders" table as default.
+    const ordersTableArea = document.getElementById('orders-table-area');
+
+    try {
+        const response = await fetch('http://localhost:5001/api/orders');
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: "Failed to fetch orders or parse error response."}));
+            throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+        }
+        const orders = await response.json();
+        ordersTableArea.classList.remove('loading-data');
+
+        if (orders && orders.length > 0) {
+            let tableHTML = '<table><thead><tr><th>Order Number</th><th>Customer Name</th><th>Order Total</th><th>Order Status</th><th>Payment Status</th></tr></thead><tbody>';
+            orders.forEach(order => {
+                tableHTML += `
+                    <tr>
+                        <td><a href="#" class="order-number-link" data-order-id="${order.orderNumber}">${order.orderNumber}</a></td>
+                        <td>
+                            <div class="customer-details">
+                                <span class="customer-name">${order.customerName || 'N/A'}</span>
+                                <span class="customer-email">${order.customerEmail || 'N/A'}</span>
+                            </div>
+                        </td>
+                        <td>${order.orderTotal || 'N/A'}</td>
+                        <td><span class="status-badge status-${(order.orderStatus || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${order.orderStatus || 'Unknown'}</span></td>
+                        <td><span class="status-badge status-${(order.paymentStatus || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${order.paymentStatus || 'Unknown'}</span></td>
+                    </tr>
+                `;
+            });
+            tableHTML += '</tbody></table>';
+            ordersTableArea.innerHTML = tableHTML;
+
+            // Re-attach event listeners to newly created order number links
+            ordersTableArea.querySelectorAll('.order-number-link').forEach(link => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const orderId = event.target.dataset.orderId;
+                    if (orderId) {
+                        displayOrderDetailsPage(orderId);
+                    }
+                });
+            });
+
+        } else {
+            ordersTableArea.innerHTML = '<p>No orders found.</p>';
+        }
+
+    } catch (error) {
+        console.error("Error fetching orders:", error);
+        ordersTableArea.classList.remove('loading-data');
+        ordersTableArea.innerHTML = `<p class="error-message">Error loading orders: ${error.message}</p>`;
+    }
+}
+
+// --- Function to Display Order Details Page ---
+async function displayOrderDetailsPage(orderId) {
+    const mainContentArea = document.getElementById('main-content-area');
+    if (!mainContentArea) return;
+
+    mainContentArea.innerHTML = '<div class="order-details-loading"><p>Loading order details...</p></div>';
+
+    try {
+        const response = await fetch(`http://localhost:5001/api/orders/${orderId}`);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: "Order not found or failed to parse error." }));
+            throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+        }
+        const order = await response.json();
+        
+        const generateProgressBar = (statusProgress) => {
+            const allSteps = ["Created", "Allocated", "Picked Up", "Shipped", "Delivered"]; 
+            let html = '<div class="progress-bar-container">';
+            allSteps.forEach((step, index) => {
+                const isCompleted = statusProgress.includes(step);
+                const isActive = isCompleted && (index === statusProgress.length -1) && (statusProgress.length < allSteps.length);
+
+                html += `<div class="progress-step ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}">
+                            <div class="progress-dot"></div>
+                            <div class="progress-label">${step}</div>
+                        </div>`;
+                if (index < allSteps.length - 1) {
+                    html += `<div class="progress-connector ${statusProgress.length > index ? 'completed' : ''}"></div>`;
+                }
+            });
+            html += '</div>';
+            return html;
+        };
+
+        let orderDetailsHTML = `
+            <div class="order-details-page">
+                <header class="order-details-header">
+                    <h1>Order ${order.displayOrderId || order.orderId}</h1>
+                    <span class="status-badge status-${(order.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${order.status || 'Unknown'}</span>
+                </header>
+                <nav class="order-details-sub-nav">
+                    <a href="#" class="active">Basic details</a>
+                    <a href="#">Allocations</a>
+                    <a href="#">Shipments</a>
+                    <a href="#">Invoices</a>
+                    <a href="#">Activity log</a>
+                </nav>
+                <div class="order-details-body">
+                    <section class="order-info-main">
+                        <div class="order-basic-info">
+                            <div><strong>Order ID:</strong> ${order.internalOrderId || 'N/A'}</div>
+                            <div><strong>Order type:</strong> ${order.orderType || 'N/A'}</div>
+                            <div><strong>Date Created:</strong> ${order.dateCreated || 'N/A'}</div>
+                        </div>
+                        <a href="#" class="view-more-attributes-link">View more attributes</a>
+                        ${(order.shippingGroups && order.shippingGroups.length > 0) ? 
+                            order.shippingGroups.map(group => `
+                                <div class="order-status-section">
+                                    <div class="section-header">
+                                        <h3>Order Status</h3>
+                                        <span class="collapse-arrow">&#9660;</span>
+                                    </div>
+                                    <div class="shipping-group">
+                                        <h4>${group.groupTitle || 'Shipping Group'} <span class="status-badge status-type-${(group.type || '').toLowerCase()}">${group.type}</span></h4>
+                                        ${group.type === 'Pick Up' && group.pickupDetails ? `
+                                            <div class="pickup-info">
+                                                <p><strong>Pick up details</strong></p>
+                                                <p>Pick up by: ${group.pickupDetails.pickUpBy || 'N/A'}</p>
+                                                <p>Pick up location: ${group.pickupDetails.pickUpLocation || 'N/A'}</p>
+                                            </div>
+                                        ` : ''}
+                                        ${group.type === 'Delivery' && group.deliveryAddress ? `
+                                            <div class="delivery-info">
+                                                <p><strong>Delivery Address:</strong> ${group.deliveryAddress || 'N/A'}</p>
+                                            </div>
+                                        ` : ''}
+                                        ${(group.lineItems && group.lineItems.length > 0) ? group.lineItems.map(item => {
+                                            const currencySymbol = item.currency === 'USD' ? '$' : (item.currency || '');
+                                            return `
+                                            <div class="line-item">
+                                                <div class="line-item-details">
+                                                    <span class="line-item-sku">${item.sku}</span>
+                                                    <span class="line-item-name">${item.productName || 'N/A'}</span>
+                                                    <span class="line-item-qty">Qty: ${item.quantity || 1}</span>
+                                                    <span class="line-item-total">Total: ${currencySymbol}${item.itemTotal || 'N/A'}</span>
+                                                </div>
+                                                <div class="line-item-progress">
+                                                    ${generateProgressBar(item.statusProgress || [])}
+                                                </div>
+                                            </div>
+                                        `}).join('') : '<p>No line items in this group.</p>'}
+                                    </div>
+                                </div>
+                            `).join('') : '<p>No shipping groups for this order.</p>'}
+                    </section>
+                    <aside class="order-summary-sidebar">
+                        <h3>Order Summary</h3>
+                        ${order.orderSummary ? `
+                            <div class="summary-item"><span>Subtotal:</span> <span>${order.orderSummary.currency === 'USD' ? '$' : (order.orderSummary.currency || '')}${order.orderSummary.subtotal || '0.00'}</span></div>
+                            <div class="summary-item"><span>Discount:</span> <span>-${order.orderSummary.currency === 'USD' ? '$' : (order.orderSummary.currency || '')}${order.orderSummary.discount || '0.00'}</span></div>
+                            <div class="summary-item"><span>Shipping:</span> <span>${order.orderSummary.currency === 'USD' ? '$' : (order.orderSummary.currency || '')}${order.orderSummary.shipping || '0.00'}</span></div>
+                            <div class="summary-item"><span>Fees:</span> <span>${order.orderSummary.currency === 'USD' ? '$' : (order.orderSummary.currency || '')}${order.orderSummary.fees || '0.00'}</span></div>
+                            <div class="summary-item"><span>Adjustments:</span> <span>${order.orderSummary.currency === 'USD' ? '$' : (order.orderSummary.currency || '')}${order.orderSummary.adjustments || '0.00'}</span></div>
+                            <div class="summary-item"><span>Taxes:</span> <span>${order.orderSummary.currency === 'USD' ? '$' : (order.orderSummary.currency || '')}${order.orderSummary.taxes || '0.00'}</span></div>
+                            <div class="summary-item total"><span>Total:</span> <span>${order.orderSummary.currency === 'USD' ? '$' : (order.orderSummary.currency || '')}${order.orderSummary.total || '0.00'}</span></div>
+                        ` : '<p>Summary not available.</p>'}
+                    </aside>
+                </div>
+            </div>
+        `;
+        mainContentArea.innerHTML = orderDetailsHTML;
+
+    } catch (error) {
+        console.error("Error fetching order details:", error);
+        mainContentArea.innerHTML = `<p class="error-message">Error loading order details: ${error.message}</p>`;
+    }
 }
 
 // --- Function to Display Home Page ---
