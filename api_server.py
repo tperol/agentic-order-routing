@@ -119,7 +119,7 @@ async def optimize_route_endpoint(request_data: OrderOptimizationRequest):
         
         # If optimization_result is None, return a default error response
         if optimization_result is None:
-            logger.error("API_RESPONSE_ERROR: Workflow returned None.")
+            workflow_logger.error("API_RESPONSE_ERROR: Workflow returned None.")
             return {
                 "error": "Failed to process the request.",
                 "logs": request_logs
@@ -127,7 +127,7 @@ async def optimize_route_endpoint(request_data: OrderOptimizationRequest):
         
         # If error in result, return error key
         if "error" in optimization_result:
-            logger.error(f"API_RESPONSE_ERROR: Workflow returned an error: {optimization_result['error']}")
+            workflow_logger.error(f"API_RESPONSE_ERROR: Workflow returned an error: {optimization_result['error']}")
             return {
                 "error": optimization_result["error"],
                 "logs": request_logs
@@ -140,11 +140,11 @@ async def optimize_route_endpoint(request_data: OrderOptimizationRequest):
             "alternatives_considered": optimization_result.get("alternatives_considered", []),
             "logs": request_logs
         }
-        logger.info("API_RESPONSE_SUCCESS: Workflow completed successfully.")
+        workflow_logger.info("API_RESPONSE_SUCCESS: Workflow completed successfully.")
         return response
 
     except Exception as e:
-        logger.error(f"API_EXCEPTION: Unhandled exception in /optimize-route: {e}", exc_info=True)
+        workflow_logger.error(f"API_EXCEPTION: Unhandled exception in /optimize-route: {e}", exc_info=True)
         # Include logs captured so far, even if an unexpected exception occurred
         return {
             "error": f"Internal server error: {str(e)}",
@@ -156,7 +156,7 @@ async def optimize_route_endpoint(request_data: OrderOptimizationRequest):
 
 @app.get("/contextual-data", response_model=ContextualDataResponse)
 async def get_contextual_data_endpoint():
-    logger.info("API_CALL: /contextual-data received request")
+    workflow_logger.info("API_CALL: /contextual-data received request")
     try:
         inventory_summary = {}
         all_products = set()
@@ -199,7 +199,7 @@ async def get_contextual_data_endpoint():
             full_product_weights=PRODUCT_WEIGHT_DB
         )
     except Exception as e:
-        logger.error(f"API_EXCEPTION: Error in /contextual-data: {e}", exc_info=True)
+        workflow_logger.error(f"API_EXCEPTION: Error in /contextual-data: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error fetching contextual data: {str(e)}")
 
 if __name__ == "__main__":
