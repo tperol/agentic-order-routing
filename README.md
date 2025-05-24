@@ -177,3 +177,61 @@ To modify or extend the POC:
 1. The agent tools are in the `tools/` directory
 2. Mock data is in `mock_data.py`
 3. Main orchestration is in `main.py`
+
+## 9. Testing
+
+This project includes a comprehensive test suite using pytest.
+
+### Installing Test Dependencies
+```bash
+# Install test dependencies
+pip install -e ".[test]"
+```
+
+### Running Tests
+```bash
+# Run all tests
+pytest
+
+# Run with coverage report
+pytest --cov=src --cov-report=html
+
+# Run specific test file
+pytest tests/test_api_endpoints.py
+
+# Run with verbose output
+pytest -v
+```
+
+### Test Structure
+```
+tests/
+├── __init__.py                    # Test package init
+├── conftest.py                    # Pytest fixtures and configuration
+├── test_api_endpoints.py          # API integration tests
+├── test_agent_tools.py            # Tool function unit tests
+├── test_mock_data.py              # Data validation tests
+├── test_agent_workflow.py         # End-to-end workflow tests
+└── fixtures/                      # Test data fixtures
+    ├── sample_orders.json         # Sample order test data
+    └── expected_responses.json    # Expected API responses
+```
+
+### Test Coverage
+The test suite covers:
+- API endpoint functionality and error handling
+- Agent tool functions (customer lookup, inventory, shipping)
+- Mock data integrity and consistency
+- End-to-end workflow scenarios (placeholder for full implementation)
+
+### Linting and Code Quality
+```bash
+# Run flake8 linting
+flake8 src tests
+
+# Run black formatting check
+black --check src tests
+
+# Auto-format code
+black src tests
+```
