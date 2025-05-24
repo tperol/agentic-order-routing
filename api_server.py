@@ -94,7 +94,7 @@ async def get_dashboard(request: Request):
 
 @app.post("/optimize-route")
 async def optimize_route_endpoint(request_data: OrderOptimizationRequest):
-    logger.info(f"API_CALL: /optimize-route received request: {request_data.model_dump()}")
+    workflow_logger.info(f"API_CALL: /optimize-route received request: {request_data.model_dump()}")
     
     request_logs = []
     list_handler = ListHandler(request_logs)
