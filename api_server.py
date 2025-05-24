@@ -1,4 +1,4 @@
-# api_server.py
+"""FastAPI server for the Agentic AI Order Routing API."""
 import logging
 import asyncio
 import os
@@ -10,7 +10,10 @@ from typing import Dict, Any, List
 import uvicorn
 
 from src.agentic_order_routing.main import main
-from src.agentic_order_routing.mock_data import INVENTORY_DB, MOCK_CRM_DB, SHIPPING_OPTIONS_DB, ZIP_TO_ZONE_DB, PRODUCT_WEIGHT_DB
+from src.agentic_order_routing.mock_data import (
+    INVENTORY_DB, MOCK_CRM_DB, SHIPPING_OPTIONS_DB, 
+    ZIP_TO_ZONE_DB, PRODUCT_WEIGHT_DB
+)
 
 
 # --- Logging Setup ---
@@ -25,15 +28,16 @@ class ListHandler(logging.Handler):
 
 # Configure the root logger or a specific logger for the agent workflow
 # We will add/remove the ListHandler per request to keep logs request-specific
-workflow_logger = logging.getLogger("agent_workflow") # Same name as used in other modules
-workflow_logger.setLevel(logging.INFO) # Set the level for this specific logger
+workflow_logger = logging.getLogger("agent_workflow")
+workflow_logger.setLevel(logging.INFO)
 
 # Basic console handler for server logs (uvicorn will also log)
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(logging.Formatter(
-    '%(asctime)s - [%(levelname)s] - %(name)s - (%(filename)s).%(funcName)s(%(lineno)d) - %(message)s'
+    '%(asctime)s - [%(levelname)s] - %(name)s - '
+    '(%(filename)s).%(funcName)s(%(lineno)d) - %(message)s'
 ))
-if not workflow_logger.hasHandlers(): # Avoid adding multiple console handlers on reloads
+if not workflow_logger.hasHandlers():
     workflow_logger.addHandler(console_handler)
 
 
@@ -41,12 +45,8 @@ if not workflow_logger.hasHandlers(): # Avoid adding multiple console handlers o
 app = FastAPI(title="AI Order Routing API")
 
 # Mount static files (for dashboard.html)
-# Assumes dashboard.html is in a 'static' directory at the project root
-# Create this 'static' directory and place your dashboard.html there.
 if not os.path.exists("static"):
     os.makedirs("static", exist_ok=True)
-    # You might want to copy the dashboard.html to static/dashboard.html here
-    # or instruct the user to do so. For now, we assume it will be there.
     
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -72,7 +72,7 @@ class ContextualDataResponse(BaseModel):
     products: List[str]    # List of product IDs
     customers: List[Dict[str, Any]]  # List of customer details
     zones: List[str]       # List of zone IDs
-    # Add full mock databases
+    # Full mock databases
     full_customers: Dict[str, Any]
     full_inventory: Dict[str, Any]
     full_shipping_options: Dict[str, Any]
@@ -81,24 +81,32 @@ class ContextualDataResponse(BaseModel):
 
 # --- API Endpoints ---
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
-async def get_dashboard(request: Request):
-    # Serve the dashboard.html
-    # Ensure dashboard.html is in the 'static' directory
+async def get_dashboard(request: Request) -> HTMLResponse:
+    """Serve the dashboard.html."""
     dashboard_path = os.path.join("static", "dashboard.html")
     if not os.path.exists(dashboard_path):
-        return HTMLResponse("<html><body><h1>Dashboard not found.</h1><p>Place dashboard.html in the 'static' directory.</p></body></html>", status_code=404)
+        return HTMLResponse(
+            "<html><body><h1>Dashboard not found.</h1>"
+            "<p>Place dashboard.html in the 'static' directory.</p></body></html>",
+            status_code=404
+        )
     
     with open(dashboard_path, "r") as f:
         html_content = f.read()
     return HTMLResponse(content=html_content)
 
 @app.post("/optimize-route")
-async def optimize_route_endpoint(request_data: OrderOptimizationRequest):
-    logger.info(f"API_CALL: /optimize-route received request: {request_data.model_dump()}")
+async def optimize_route_endpoint(request_data: OrderOptimizationRequest) -> dict:
+    """Optimize route endpoint."""
+    logger.info(
+        f"API_CALL: /optimize-route received request: {request_data.model_dump()}"
+    )
     
     request_logs = []
     list_handler = ListHandler(request_logs)
-    formatter = logging.Formatter('%(asctime)s - [%(levelname)s] - %(name)s - %(message)s') # Simple format for UI
+    formatter = logging.Formatter(
+        '%(asctime)s - [%(levelname)s] - %(name)s - %(message)s'
+    )
     list_handler.setFormatter(formatter)
     
     # Add per-request handler to capture logs for this specific call
@@ -127,7 +135,10 @@ async def optimize_route_endpoint(request_data: OrderOptimizationRequest):
         
         # If error in result, return error key
         if "error" in optimization_result:
-            logger.error(f"API_RESPONSE_ERROR: Workflow returned an error: {optimization_result['error']}")
+            logger.error(
+                f"API_RESPONSE_ERROR: Workflow returned an error: "
+                f"{optimization_result['error']}"
+            )
             return {
                 "error": optimization_result["error"],
                 "logs": request_logs
@@ -137,14 +148,19 @@ async def optimize_route_endpoint(request_data: OrderOptimizationRequest):
         response = {
             "recommendation": optimization_result.get("recommendation"),
             "reasoning": optimization_result.get("reasoning"),
-            "alternatives_considered": optimization_result.get("alternatives_considered", []),
+            "alternatives_considered": optimization_result.get(
+                "alternatives_considered", []
+            ),
             "logs": request_logs
         }
         logger.info("API_RESPONSE_SUCCESS: Workflow completed successfully.")
         return response
 
     except Exception as e:
-        logger.error(f"API_EXCEPTION: Unhandled exception in /optimize-route: {e}", exc_info=True)
+        logger.error(
+            f"API_EXCEPTION: Unhandled exception in /optimize-route: {e}",
+            exc_info=True
+        )
         # Include logs captured so far, even if an unexpected exception occurred
         return {
             "error": f"Internal server error: {str(e)}",
@@ -155,7 +171,8 @@ async def optimize_route_endpoint(request_data: OrderOptimizationRequest):
         workflow_logger.removeHandler(list_handler)
 
 @app.get("/contextual-data", response_model=ContextualDataResponse)
-async def get_contextual_data_endpoint():
+async def get_contextual_data_endpoint() -> ContextualDataResponse:
+    """Get contextual data endpoint."""
     logger.info("API_CALL: /contextual-data received request")
     try:
         inventory_summary = {}
@@ -167,9 +184,7 @@ async def get_contextual_data_endpoint():
                     inventory_summary[prod_id] = {}
                 inventory_summary[prod_id][wh] = stock
         
-        # For a simpler summary for the UI, let's just send the raw INVENTORY_DB
-        # or a slightly processed version. The above is a bit complex for a quick viz.
-        # Let's send total stock per product and stock per warehouse.
+        # Send processed inventory summary
         
         processed_inventory_summary = {}
         for warehouse, stock_data in INVENTORY_DB.items():
@@ -182,16 +197,19 @@ async def get_contextual_data_endpoint():
         unique_zones = set(ZIP_TO_ZONE_DB.values())
 
         return ContextualDataResponse(
-            inventory_summary=processed_inventory_summary,  # Sending detailed breakdown
+            inventory_summary=processed_inventory_summary,
             warehouse_count=len(INVENTORY_DB),
             product_count=len(all_products),
             customer_count=len(MOCK_CRM_DB),
             zone_count=len(unique_zones),
             warehouses=list(INVENTORY_DB.keys()),
             products=list(all_products),
-            customers=[{"id": cust_id, **details} for cust_id, details in MOCK_CRM_DB.items()],
+            customers=[
+                {"id": cust_id, **details} 
+                for cust_id, details in MOCK_CRM_DB.items()
+            ],
             zones=list(unique_zones),
-            # Add full mock databases
+            # Full mock databases
             full_customers=MOCK_CRM_DB,
             full_inventory=INVENTORY_DB,
             full_shipping_options=SHIPPING_OPTIONS_DB,
@@ -199,12 +217,18 @@ async def get_contextual_data_endpoint():
             full_product_weights=PRODUCT_WEIGHT_DB
         )
     except Exception as e:
-        logger.error(f"API_EXCEPTION: Error in /contextual-data: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Error fetching contextual data: {str(e)}")
+        logger.error(
+            f"API_EXCEPTION: Error in /contextual-data: {e}", 
+            exc_info=True
+        )
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error fetching contextual data: {str(e)}"
+        )
 
 if __name__ == "__main__":
     # This allows running the server directly with `python api_server.py`
-    # For production, use a process manager like Gunicorn: `uvicorn api_server:app --reload`
+    # For production, use a process manager like Gunicorn
     logger = logging.getLogger(__name__)
     logger.info("Starting FastAPI server with Uvicorn...")
     uvicorn.run(app, host="0.0.0.0", port=8000)

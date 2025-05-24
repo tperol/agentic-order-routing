@@ -1,0 +1,21 @@
+[flake8]
+max-line-length = 88
+max-complexity = 10
+select = E,W,F,C
+ignore = 
+    # W503: line break before binary operator (conflicts with W504)
+    W503,
+    # E203: whitespace before ':' (conflicts with black)
+    E203
+exclude = 
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    .env,
+    env,
+    build,
+    dist,
+    *.egg-info
+per-file-ignores =
+    __init__.py:F401

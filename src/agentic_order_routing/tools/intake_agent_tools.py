@@ -1,9 +1,11 @@
-# This file contains tool functions for the OrderIntakeAssistant/Agent.
-# These tools help in validating and enriching raw order data.
+"""Tool functions for the OrderIntakeAssistant/Agent.
+
+These tools help in validating and enriching raw order data.
+"""
 
 import json
 import logging
-from agentic_order_routing.mock_data import MOCK_CRM_DB # Importing the customer database
+from agentic_order_routing.mock_data import MOCK_CRM_DB
 from agents import function_tool
 
 logger = logging.getLogger("agent_workflow")
@@ -46,8 +48,8 @@ def get_customer_details_tool(customer_id: str) -> str:
     customer_details_for_agent = {
         "customer_id": customer_id,
         "name": customer_data.get("name", "N/A"),
-        "zip_code": zip_code, # Already validated to exist
-        "tier": customer_data.get("tier", "standard") # Default tier if not specified
+        "zip_code": zip_code,  # Already validated to exist
+        "tier": customer_data.get("tier", "standard")  # Default tier if not specified
     }
     
     result_json = json.dumps(customer_details_for_agent)
@@ -55,8 +57,11 @@ def get_customer_details_tool(customer_id: str) -> str:
     return result_json
 
 # --- Main block for testing the tool directly ---
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - [%(levelname)s] - %(name)s - %(message)s')
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - [%(levelname)s] - %(name)s - %(message)s'
+    )
     logger.info("--- Testing intake_agent_tools.py (direct execution) ---")
 
     # Test case 1: Valid customer
