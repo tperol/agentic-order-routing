@@ -1,0 +1,95 @@
+{
+    "optimize_route_success": {
+        "status": "success",
+        "result": {
+            "order_id": "ORDER-001",
+            "customer_validation": {
+                "is_valid": true,
+                "customer_id": "cust_001",
+                "name": "John Doe",
+                "vip_status": true
+            },
+            "routing_decision": {
+                "fulfillment_center": "FC_EAST",
+                "zone": "ZONE_1",
+                "shipping_method": "Next Day Air",
+                "estimated_delivery": "2025-05-26"
+            },
+            "inventory_check": {
+                "all_items_available": true,
+                "items": [
+                    {
+                        "product_id": "prod_001",
+                        "available": true,
+                        "warehouse": "FC_EAST"
+                    },
+                    {
+                        "product_id": "prod_002",
+                        "available": true,
+                        "warehouse": "FC_EAST"
+                    }
+                ]
+            }
+        }
+    },
+    "optimize_route_customer_not_found": {
+        "status": "success",
+        "result": {
+            "order_id": "INVALID-001",
+            "customer_validation": {
+                "is_valid": false,
+                "error": "Customer not found"
+            }
+        }
+    },
+    "contextual_data_structure": {
+        "customers": [
+            {
+                "customer_id": "cust_001",
+                "name": "John Doe",
+                "zip_code": "10001",
+                "tier": "VIP"
+            }
+        ],
+        "products": [
+            {
+                "product_id": "prod_001",
+                "name": "Laptop",
+                "category": "Electronics",
+                "weight_kg": 2.5,
+                "co2_per_unit": 50
+            }
+        ],
+        "inventory": {
+            "total_products": 10,
+            "warehouses": [
+                {
+                    "location": "FC_EAST",
+                    "products": 5
+                },
+                {
+                    "location": "FC_WEST",
+                    "products": 5
+                }
+            ]
+        },
+        "shipping_options": [
+            {
+                "route": "FC_EAST_ZONE_1",
+                "options": [
+                    {
+                        "carrier": "FedEx",
+                        "cost": 25.99,
+                        "days": 1,
+                        "co2_kg": 5.2
+                    }
+                ]
+            }
+        ],
+        "zone_assignments": {
+            "10001": "ZONE_1",
+            "90001": "ZONE_3",
+            "60601": "ZONE_2"
+        }
+    }
+}

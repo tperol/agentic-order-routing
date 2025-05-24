@@ -1,0 +1,110 @@
+{
+    "valid_orders": [
+        {
+            "orderId": "ORDER-001",
+            "customerId": "cust_001",
+            "items": [
+                {
+                    "productId": "prod_001",
+                    "quantity": 2
+                },
+                {
+                    "productId": "prod_002",
+                    "quantity": 1
+                }
+            ],
+            "shippingAddress": "123 Main St, New York, NY 10001"
+        },
+        {
+            "orderId": "ORDER-002",
+            "customerId": "cust_002",
+            "items": [
+                {
+                    "productId": "prod_003",
+                    "quantity": 5
+                }
+            ],
+            "shippingAddress": "456 Oak Ave, Los Angeles, CA 90001"
+        },
+        {
+            "orderId": "ORDER-003",
+            "customerId": "cust_003",
+            "items": [
+                {
+                    "productId": "prod_001",
+                    "quantity": 1
+                },
+                {
+                    "productId": "prod_004",
+                    "quantity": 3
+                }
+            ],
+            "shippingAddress": "789 Pine St, Chicago, IL 60601"
+        }
+    ],
+    "invalid_orders": [
+        {
+            "orderId": "INVALID-001",
+            "customerId": "cust_999",
+            "items": [
+                {
+                    "productId": "prod_001",
+                    "quantity": 1
+                }
+            ],
+            "shippingAddress": "Invalid Address"
+        },
+        {
+            "orderId": "INVALID-002",
+            "customerId": "",
+            "items": [
+                {
+                    "productId": "prod_001",
+                    "quantity": 1
+                }
+            ],
+            "shippingAddress": "123 Test St"
+        },
+        {
+            "orderId": "INVALID-003",
+            "customerId": "cust_001",
+            "items": [],
+            "shippingAddress": "123 Main St"
+        },
+        {
+            "orderId": "INVALID-004",
+            "customerId": "cust_001",
+            "items": [
+                {
+                    "productId": "prod_999",
+                    "quantity": 1
+                }
+            ],
+            "shippingAddress": "123 Main St"
+        }
+    ],
+    "edge_case_orders": [
+        {
+            "orderId": "EDGE-001",
+            "customerId": "cust_001",
+            "items": [
+                {
+                    "productId": "prod_001",
+                    "quantity": 0
+                }
+            ],
+            "shippingAddress": "123 Main St"
+        },
+        {
+            "orderId": "EDGE-002",
+            "customerId": "cust_001",
+            "items": [
+                {
+                    "productId": "prod_001",
+                    "quantity": 10000
+                }
+            ],
+            "shippingAddress": "123 Main St"
+        }
+    ]
+}
