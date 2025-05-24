@@ -1,5 +1,7 @@
-# This file contains all the mock data stores used in the Agentic AI Order Routing POC.
-# These dictionaries simulate databases and external services for demonstration purposes.
+"""Mock data stores for the Agentic AI Order Routing POC.
+
+These dictionaries simulate databases and external services for demonstration.
+"""
 
 # 1. Mock Customer Relationship Management (CRM) Database
 # Stores basic customer data, including their shipping ZIP code and customer tier.
@@ -115,7 +117,7 @@ PRODUCT_WEIGHT_DB = {
     "product_D": 0.5    # kg (new light product)
 }
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # This block allows you to quickly test if the data structures are accessible
     # by running `python mock_data.py` from your terminal.
     print("--- MOCK_CRM_DB ---")

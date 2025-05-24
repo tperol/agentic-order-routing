@@ -10,4 +10,14 @@ requires-python = ">=3.12"
 dependencies = [
     "openai-agents",
     "python-dotenv"
-] 
+]
+
+[project.optional-dependencies]
+dev = [
+    "flake8>=6.0.0",
+    "black>=23.0.0"
+]
+
+[tool.flake8]
+max-line-length = 88
+max-complexity = 10 
